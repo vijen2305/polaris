@@ -44,9 +44,8 @@ func (k *Keeper) InitGenesis(ctx sdk.Context, genState *core.Genesis) error {
 	}
 
 	// Insert to chain.
-	k.chain.
-		PreparePlugins(ctx.WithEventManager(sdk.NewEventManager()))
-	return k.chain.InsertBlockWithoutSetHead(genState.ToBlock())
+	// PreparePlugins(ctx.WithEventManager(sdk.NewEventManager()))
+	return nil
 }
 
 // ExportGenesis returns the exported genesis state.

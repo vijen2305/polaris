@@ -49,7 +49,7 @@ type Keeper struct {
 	*Host
 
 	// provider is the struct that houses the Polaris EVM.
-	chain Blockchain
+	chain *core.BlockChain
 
 	// TODO: remove this, because it's hacky af.
 	storeKey storetypes.StoreKey
@@ -78,7 +78,7 @@ func NewKeeper(
 	}
 }
 
-func (k *Keeper) Setup(chain Blockchain) error {
+func (k *Keeper) Setup(chain *core.BlockChain) error {
 	k.chain = chain
 	return k.SetupPrecompiles()
 }
@@ -88,7 +88,7 @@ func (k *Keeper) StartEnginePlugin(ctx client.Context) {
 }
 
 // SetBlock sets the underlying ethereum blockchain on the keeper.
-func (k *Keeper) SetBlockchain(chain Blockchain) {
+func (k *Keeper) SetBlockchain(chain *core.BlockChain) {
 	k.chain = chain
 }
 

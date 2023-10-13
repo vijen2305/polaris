@@ -28,6 +28,7 @@ import (
 
 	lru "github.com/ethereum/go-ethereum/common/lru"
 	"github.com/ethereum/go-ethereum/core"
+	gethstate "github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/trie"
 
@@ -106,6 +107,7 @@ type blockchain struct {
 	rmLogsFeed      event.Feed // currently never used
 	chainSideFeed   event.Feed // currently never used
 	logger          log.Logger
+	stdb            gethstate.Database
 }
 
 // =========================================================================
@@ -116,6 +118,7 @@ type blockchain struct {
 func NewChain(
 	host PolarisHostChain, config *params.ChainConfig, engine consensus.Engine,
 ) *blockchain { //nolint:revive // only used as `api.Chain`.
+	// ethdb := rawdb.NewMemoryDatabase()
 	bc := &blockchain{
 		bp:             host.GetBlockPlugin(),
 		hp:             host.GetHistoricalPlugin(),
@@ -131,8 +134,10 @@ func NewChain(
 		scope:          event.SubscriptionScope{},
 		logger:         log.Root(),
 		engine:         engine,
+		stdb:           gethstate.NewDatabase(nil),
 	}
 	bc.statedb = state.NewStateDB(bc.sp, bc.pp)
+	bc.statedb, _ = gethstate.New(common.Hash{}, bc.stdb, nil)
 	bc.processor = core.NewStateProcessor(bc.config, bc, bc.engine)
 	// TODO: hmm...
 	bc.currentBlock.Store(

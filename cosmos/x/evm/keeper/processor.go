@@ -50,21 +50,29 @@ func (k *Keeper) ProcessPayloadEnvelope(
 	blockGasMeter.RefundGas(blockGasMeter.GasConsumed(), "reset before evm block")
 	defer gasMeter.ConsumeGas(gasMeter.GasConsumed(), "reset after evm")
 
+	fmt.Println("HERE")
 	if err = envelope.UnmarshalJSON(msg.Data); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal payload envelope: %w", err)
 	}
 
+	fmt.Println("HERE")
 	if block, err = engine.ExecutableDataToBlock(*envelope.ExecutionPayload, nil, nil); err != nil {
 		k.Logger(sCtx).Error("failed to build evm block", "err", err)
 		return nil, err
 	}
 
 	// Prepare should be moved to the blockchain? THIS IS VERY HOOD YES NEEDS TO BE MOVED.
-	k.chain.PreparePlugins(ctx)
+	// k.chain.PreparePlugins(ctx)
+	fmt.Println("HERE")
 	if err = k.chain.InsertBlockWithoutSetHead(block); err != nil {
+		fmt.Println("ERROR", err)
 		return nil, err
 	}
 
+	fmt.Println("HERE")
+	k.chain.SetCanonical(block)
+
+	fmt.Println("HERE")
 	return &evmtypes.WrappedPayloadEnvelopeResponse{}, nil
 }
 

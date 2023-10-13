@@ -26,7 +26,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/node"
@@ -35,17 +34,18 @@ import (
 	libtx "pkg.berachain.dev/polaris/cosmos/lib/tx"
 	"pkg.berachain.dev/polaris/cosmos/miner"
 	"pkg.berachain.dev/polaris/cosmos/txpool"
-	evmkeeper "pkg.berachain.dev/polaris/cosmos/x/evm/keeper"
 	evmtypes "pkg.berachain.dev/polaris/cosmos/x/evm/types"
 	"pkg.berachain.dev/polaris/eth/core"
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 	"pkg.berachain.dev/polaris/eth/polar"
+
+	gethcore "github.com/ethereum/go-ethereum/core"
 )
 
 // EVMKeeper is an interface that defines the methods needed for the EVM setup.
 type EVMKeeper interface {
 	// Setup initializes the EVM keeper.
-	Setup(evmkeeper.Blockchain) error
+	Setup(*gethcore.BlockChain) error
 
 	// TODO: remove.
 	StartEnginePlugin(client.Context)
@@ -89,7 +89,7 @@ func (p *Polaris) Setup(bApp *baseapp.BaseApp, ek EVMKeeper) error {
 	p.WrappedMiner = miner.New(p.Miner())
 	bApp.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
 
-	if err := ek.Setup(p.Blockchain()); err != nil {
+	if err := ek.Setup(p.BlockChain()); err != nil {
 		return err
 	}
 
@@ -139,9 +139,14 @@ func (p *Polaris) RegisterServices(_ client.Context, lcs []node.Lifecycle) {
 // It takes a CommitMultiStore and an appHeight as arguments.
 // It returns an error if the loading fails.
 func (p *Polaris) LoadLastState(cms storetypes.CommitMultiStore, appHeight uint64) error {
-	cmsCtx := sdk.Context{}.
-		WithMultiStore(cms).
-		WithGasMeter(storetypes.NewInfiniteGasMeter()).
-		WithBlockGasMeter(storetypes.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
-	return p.Blockchain().LoadLastState(cmsCtx, appHeight)
+	// cmsCtx := sdk.Context{}.
+	// WithMultiStore(cms).
+	// WithGasMeter(storetypes.NewInfiniteGasMeter()).
+	// The commented line `// return p.Blockchain().LoadLastState(cmsCtx, appHeight)` is calling the
+	// `LoadLastState` method of the `Blockchain` component in the Polaris struct. This method is
+	// responsible for loading the last state of the blockchain from the provided CommitMultiStore and
+	// appHeight. However, the line is currently commented out, so it is not being executed.
+	// WithBlockGasMeter(storetypes.NewInfiniteGasMeter()).WithEventManager(sdk.NewEventManager())
+	// return p.Blockchain().LoadLastState(cmsCtx, appHeight)
+	return nil
 }

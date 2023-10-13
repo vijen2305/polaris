@@ -21,12 +21,12 @@
 package core
 
 import (
-	"errors"
-
 	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/eth/core/state"
 	"pkg.berachain.dev/polaris/eth/core/vm"
 	"pkg.berachain.dev/polaris/eth/params"
+
+	gethstate "github.com/ethereum/go-ethereum/core/state"
 )
 
 // ChainResources is the interface that defines functions for code paths within the chain to
@@ -39,8 +39,8 @@ type ChainResources interface {
 }
 
 // StateAt returns a statedb configured to read what the state of the blockchain is/was at a given.
-func (bc *blockchain) StateAt(common.Hash) (state.StateDB, error) {
-	return nil, errors.New("StateAt is not implemented in polaris due state root")
+func (bc *blockchain) StateAt(hash common.Hash) (state.StateDB, error) {
+	return gethstate.New(hash, bc.stdb, nil)
 }
 
 // StateAtBlockNumber returns a statedb configured to read what the state of the blockchain is/was

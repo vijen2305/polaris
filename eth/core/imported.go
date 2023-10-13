@@ -25,6 +25,7 @@ import (
 )
 
 type (
+	BlockChain = core.BlockChain
 	// ChainContext provides information about the current blockchain to the EVM.
 	ChainContext = core.ChainContext
 	// ChainEvent contains information about the chain.
