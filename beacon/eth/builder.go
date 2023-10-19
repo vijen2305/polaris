@@ -41,20 +41,20 @@ func NewBuilderAPI(c *ethclient.Client) BuilderAPI {
 	return &builderAPI{c}
 }
 
-func (api *builderAPI) CurrentBlock(ctx context.Context) *coretypes.Block {
+func (api *builderAPI) CurrentBlock(ctx context.Context) (*coretypes.Block, error) {
 	b, err := api.Client.BlockByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
 	if err != nil {
 		b, err = api.Client.BlockByNumber(ctx, nil)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 	}
-	return b
+	return b, nil
 }
 
-func (api *builderAPI) BlockByNumber(num uint64) *coretypes.Block {
+func (api *builderAPI) BlockByNumber(num uint64) (*coretypes.Block, error) {
 	b, _ := api.Client.BlockByNumber(context.Background(), new(big.Int).SetUint64(num))
-	return b
+	return b, nil
 }
 
 func (api *builderAPI) Etherbase(ctx context.Context) (common.Address, error) {
@@ -75,19 +75,19 @@ func (api *builderAPI) BuildBlock(
 	return &payload, nil
 }
 
-func (api *builderAPI) NewPayloadV2(
-	ctx context.Context, params engine.ExecutableData,
-) (engine.PayloadStatusV1, error) {
-	var payloadStatus engine.PayloadStatusV1
-	err := api.Client.Client().CallContext(ctx, &payloadStatus, "engine_newPayloadV2", params)
-	return payloadStatus, err
-}
+// func (api *builderAPI) NewPayloadV2(
+// 	ctx context.Context, params engine.ExecutableData,
+// ) (engine.PayloadStatusV1, error) {
+// 	var payloadStatus engine.PayloadStatusV1
+// 	err := api.Client.Client().CallContext(ctx, &payloadStatus, "engine_newPayloadV2", params)
+// 	return payloadStatus, err
+// }
 
-func (api *builderAPI) ForkchoiceUpdatedV2(
-	ctx context.Context, update engine.ForkchoiceStateV1, payloadAttributes *engine.PayloadAttributes,
-) (engine.ForkChoiceResponse, error) {
-	var response engine.ForkChoiceResponse
-	err := api.Client.Client().CallContext(
-		ctx, &response, "engine_forkchoiceUpdatedV2", update, payloadAttributes)
-	return response, err
-}
+// func (api *builderAPI) ForkchoiceUpdated(
+// 	ctx context.Context, state *pb.ForkchoiceState, attrs payloadattribute.Attributer,
+// ) (*pb.PayloadIDBytes, []byte, error) {
+// 	var response engine.ForkChoiceResponse
+// 	err := api.Client.Client().CallContext(
+// 		ctx, &response, "engine_forkchoiceUpdatedV2", state, attrs)
+// 	return response, nil, err
+// }

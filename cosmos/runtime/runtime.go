@@ -75,9 +75,8 @@ func New(
 		logger: logger,
 	}
 
-	logger.Info("Waiting for execution client connection...")
 	p.ExecutionClient, err = eth.NewRemoteExecutionClient(
-		dialURL, logger,
+		dialURL, "ba6d51b12d7854243e2f91fc66ea419fc587f7f78cc63e6f2925df1469962a60", logger,
 	)
 	if err != nil {
 		panic(err)
@@ -93,7 +92,7 @@ func (p *Polaris) Build(app CosmosApp, ek EVMKeeper) error {
 	p.WrappedTxPool = txpool.New(p.TxPool)
 	app.SetMempool(p.WrappedTxPool)
 
-	p.WrappedMiner = miner.New(p.ExecutionClient.BlockBuilder)
+	p.WrappedMiner = miner.New(p.ExecutionClient.Consensus)
 	app.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
 
 	if err := ek.Setup(p.ExecutionClient); err != nil {

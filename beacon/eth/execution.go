@@ -24,14 +24,21 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"net/http"
+	"strings"
 	"time"
+
+	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/miner"
-
+	"github.com/prysmaticlabs/prysm/v4/network"
+	prsymnetwork "github.com/prysmaticlabs/prysm/v4/network"
+	"github.com/prysmaticlabs/prysm/v4/network/authorization"
 	"pkg.berachain.dev/polaris/beacon/log"
+	prsym "pkg.berachain.dev/polaris/beacon/prysm"
 	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/eth/core"
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
@@ -42,9 +49,8 @@ type (
 	BuilderAPI interface {
 		BuildBlock(context.Context, *miner.BuildPayloadArgs) (*engine.ExecutionPayloadEnvelope, error)
 		Etherbase(context.Context) (common.Address, error)
-		BlockByNumber(uint64) *coretypes.Block
-		CurrentBlock(ctx context.Context) *coretypes.Block
-		ConsensusAPI
+		BlockByNumber(uint64) (*coretypes.Block, error)
+		CurrentBlock(ctx context.Context) (*coretypes.Block, error)
 	}
 
 	// TxPool represents the `TxPool` that exists on the backend of the execution layer.
@@ -55,12 +61,9 @@ type (
 	}
 
 	ConsensusAPI interface {
-		NewPayloadV2(ctx context.Context,
-			params engine.ExecutableData,
-		) (engine.PayloadStatusV1, error)
-		ForkchoiceUpdatedV2(ctx context.Context,
-			update engine.ForkchoiceStateV1,
-			payloadAttributes *engine.PayloadAttributes) (engine.ForkChoiceResponse, error)
+		prsym.EngineCaller
+		BlockByNumber(context.Context, *big.Int) (*coretypes.Block, error)
+		BlockNumber(context.Context) (uint64, error)
 	}
 )
 
@@ -72,21 +75,28 @@ type ExecutionClient struct {
 }
 
 // NewRemoteExecutionClient creates a new remote execution client.
-func NewRemoteExecutionClient(dialURL string, logger log.Logger) (*ExecutionClient, error) {
+func NewRemoteExecutionClient(dialURL, jwtSecret string, logger log.Logger) (*ExecutionClient, error) {
+	ctx := context.Background()
 	var (
-		client  *ethclient.Client
+		client  *rpc.Client
 		chainID *big.Int
 		err     error
 	)
 
-	ctx := context.Background()
+	jwtSecretR := common.FromHex(strings.TrimSpace(string(jwtSecret)))
+
+	endpoint := NewPrysmEndpoint(dialURL, jwtSecretR)
+	client, err = newRPCClientWithAuth(ctx, nil, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	var ethClient *ethclient.Client
 	for i := 0; i < 100; func() { i++; time.Sleep(time.Second) }() {
-		logger.Info("Attempting to connect to execution layer", "attempt", i+1, "dial-url", dialURL)
-		client, err = ethclient.DialContext(ctx, dialURL)
-		if err != nil {
-			continue
-		}
-		chainID, err = client.ChainID(ctx)
+		logger.Info("waiting for connection to execution layer", "dial-url", dialURL)
+		ethClient = ethclient.NewClient(client)
+		chainID, err = ethClient.ChainID(ctx)
+		fmt.Println(err)
 		if err != nil {
 			continue
 		}
@@ -97,9 +107,50 @@ func NewRemoteExecutionClient(dialURL string, logger log.Logger) (*ExecutionClie
 		return nil, fmt.Errorf("failed to establish connection to execution layer: %w", err)
 	}
 
+	prsymClient := prsym.NewEngineClientService(ethClient)
+
 	return &ExecutionClient{
-		BlockBuilder: &builderAPI{Client: client},
-		TxPool:       &txPoolAPI{Client: client},
-		Consensus:    &builderAPI{Client: client},
+		// BlockBuilder: &builderAPI{Client: client},
+		TxPool:    &txPoolAPI{Client: ethClient},
+		Consensus: prsymClient,
 	}, nil
+}
+
+// Initializes an RPC connection with authentication headers.
+func newRPCClientWithAuth(ctx context.Context, headersMap map[string]string, endpoint network.Endpoint) (*rpc.Client, error) {
+	headers := http.Header{}
+	if endpoint.Auth.Method != authorization.None {
+		header, err := endpoint.Auth.ToHeaderValue()
+		if err != nil {
+			return nil, err
+		}
+		headers.Set("Authorization", header)
+	}
+	for _, h := range headersMap {
+		if h == "" {
+			continue
+		}
+		keyValue := strings.Split(h, "=")
+		if len(keyValue) < 2 {
+			// log.LoggerWarn("Incorrect HTTP header flag format. Skipping %v", keyValue[0])
+			continue
+		}
+		headers.Set(keyValue[0], strings.Join(keyValue[1:], "="))
+	}
+
+	fmt.Println("HEADERS", headers)
+	return network.NewExecutionRPCClient(ctx, endpoint, headers)
+}
+
+func NewPrysmEndpoint(endpointString string, secret []byte) prsymnetwork.Endpoint {
+	if len(secret) == 0 {
+		return network.HttpEndpoint(endpointString)
+	}
+	// Overwrite authorization type for all endpoints to be of a bearer type.
+	hEndpoint := network.HttpEndpoint(endpointString)
+	hEndpoint.Auth.Method = authorization.Bearer
+	hEndpoint.Auth.Value = string(secret)
+
+	return hEndpoint
+
 }

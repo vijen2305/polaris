@@ -22,6 +22,13 @@
 package miner
 
 import (
+	"bytes"
+	"context"
+	"crypto/rand"
+	"fmt"
+	"math/big"
+	"time"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,7 +36,8 @@ import (
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/miner"
-
+	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
+	pb "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
 	"pkg.berachain.dev/polaris/beacon/eth"
 	"pkg.berachain.dev/polaris/eth/core/types"
 )
@@ -45,14 +53,18 @@ type EnvelopeSerializer interface {
 
 // Miner implements the baseapp.TxSelector interface.
 type Miner struct {
-	eth.BuilderAPI
-	serializer EnvelopeSerializer
+	eth.ConsensusAPI
+	serializer         EnvelopeSerializer
+	etherbase          common.Address
+	curForkchoiceState *pb.ForkchoiceState
+	lastBlockTime      uint64
 }
 
 // New produces a cosmos miner from a geth miner.
-func New(gm eth.BuilderAPI) *Miner {
+func New(gm eth.ConsensusAPI) *Miner {
 	return &Miner{
-		BuilderAPI: gm,
+		ConsensusAPI:       gm,
+		curForkchoiceState: &pb.ForkchoiceState{},
 	}
 }
 
@@ -65,52 +77,145 @@ func (m *Miner) Init(serializer EnvelopeSerializer) {
 func (m *Miner) PrepareProposal(
 	ctx sdk.Context, _ *abci.RequestPrepareProposal,
 ) (*abci.ResponsePrepareProposal, error) {
-	var payloadEnvelopeBz []byte
+	var _ []byte
 	var err error
-	if payloadEnvelopeBz, err = m.buildBlock(ctx); err != nil {
+	if _, err = m.buildBlock(ctx); err != nil {
 		return nil, err
 	}
-	return &abci.ResponsePrepareProposal{Txs: [][]byte{payloadEnvelopeBz}}, err
+	return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, err
+}
+
+// finalizedBlockHash returns the block hash of the finalized block corresponding to the given number
+// or nil if doesn't exist in the chain.
+func (c *Miner) finalizedBlockHash(number uint64) *common.Hash {
+	var finalizedNumber = number
+	// if number%devEpochLength == 0 {
+	// } else {
+	// 	finalizedNumber = (number - 1) / devEpochLength * devEpochLength
+	// }
+
+	fmt.Println(finalizedNumber)
+	if finalizedBlock, err := c.ConsensusAPI.BlockByNumber(context.Background(), big.NewInt(int64(finalizedNumber))); finalizedBlock != nil && err == nil {
+		fh := finalizedBlock.Hash()
+		fmt.Println("FH", fh)
+		return &fh
+	}
+	return nil
 }
 
 // buildBlock builds and submits a payload, it also waits for the txs
 // to resolve from the underying worker.
 func (m *Miner) buildBlock(ctx sdk.Context) ([]byte, error) {
 	var (
-		err      error
-		envelope *engine.ExecutionPayloadEnvelope
-		sCtx     = sdk.UnwrapSDKContext(ctx)
+		err error
+		// envelope *engine.ExecutionPayloadEnvelope
+		sCtx = sdk.UnwrapSDKContext(ctx)
 	)
-	// Build Payload
-	parent := m.CurrentBlock(ctx)
-	if envelope, err = m.BuildBlock(ctx, m.constructPayloadArgs(sCtx, parent)); err != nil {
-		sCtx.Logger().Error("failed to build payload", "err", err)
-		return nil, err
+
+	// Reset to CurrentBlock in case of the chain was rewound
+	number, err := m.ConsensusAPI.BlockNumber(ctx)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	bz, err := m.serializer.ToSdkTxBytes(envelope, envelope.ExecutionPayload.GasLimit)
+	if header, err := m.ConsensusAPI.BlockByNumber(ctx, big.NewInt(int64(number))); err != nil {
+		fmt.Println(err)
+	} else if !bytes.Equal(m.curForkchoiceState.HeadBlockHash, header.Hash().Bytes()) {
+
+		finalizedHash := m.finalizedBlockHash(header.Number().Uint64())
+
+		m.setCurrentState(header.Hash().Bytes(), finalizedHash.Bytes())
+	}
+
+	tstamp := sCtx.BlockTime()
+	var random [32]byte
+	rand.Read(random[:])
+
+	attrs, err := payloadattribute.New(&pb.PayloadAttributesV2{
+		Timestamp:             uint64(tstamp.Unix()),
+		SuggestedFeeRecipient: m.etherbase.Bytes(),
+		Withdrawals:           nil,
+		PrevRandao:            append([]byte{}, random[:]...),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return bz, nil
+	fcResponse, latestValidHash, err := m.ConsensusAPI.ForkchoiceUpdated(ctx, m.curForkchoiceState, attrs)
+	if err != nil {
+		fmt.Println(err)
+	}
+	time.Sleep(400 * time.Millisecond)
+	// // Build Payload
+	// parent := m.CurrentBlock(ctx)
+	// if envelope, err = m.BuildBlock(ctx, m.constructPayloadArgs(sCtx, parent)); err != nil {
+	// 	sCtx.Logger().Error("failed to build payload", "err", err)
+	// 	return nil, err
+	// }
+
+	data, _, _, err := m.ConsensusAPI.GetPayload(ctx, *fcResponse, 100000000000)
+	if err != nil {
+		fmt.Println(err)
+	}
+	time.Sleep(400 * time.Millisecond)
+
+	// // interfaces.ExecutionData, *pb.BlobsBundle, bool, error
+	// if data. == engine.STATUS_SYNCING {
+	// 	return errors.New("chain rewind prevented invocation of payload creation")
+	// }
+	// Mark the payload as canon
+	if _, err = m.ConsensusAPI.NewPayload(ctx, data, nil, nil); err != nil {
+		if err != nil {
+			fmt.Println(err)
+		}
+		return nil, err
+	}
+	time.Sleep(400 * time.Millisecond)
+	m.setCurrentState(data.BlockHash(), latestValidHash)
+
+	// // m.ConsensusAPI.NewPayload(ctx)
+
+	// bz, err := m.serializer.ToSdkTxBytes(data.En, envelope.ExecutionPayload.GasLimit)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	time.Sleep(400 * time.Millisecond)
+	attrs2, err := payloadattribute.New(&pb.PayloadAttributesV2{})
+	if err != nil {
+		return nil, err
+	}
+
+	fcResponse, latestValidHash, err = m.ConsensusAPI.ForkchoiceUpdated(ctx, m.curForkchoiceState, attrs2)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return []byte{}, nil
+}
+
+// setCurrentState sets the current forkchoice state
+func (c *Miner) setCurrentState(headHash, finalizedHash []byte) {
+	c.curForkchoiceState = &pb.ForkchoiceState{
+		HeadBlockHash:      headHash,
+		SafeBlockHash:      headHash,
+		FinalizedBlockHash: finalizedHash,
+	}
 }
 
 // constructPayloadArgs builds a payload to submit to the miner.
 func (m *Miner) constructPayloadArgs(
 	ctx sdk.Context, parent *types.Block) *miner.BuildPayloadArgs {
-	etherbase, err := m.Etherbase(ctx)
-	if err != nil {
-		ctx.Logger().Error("failed to get etherbase", "err", err)
-		return nil
-	}
+	// etherbase, err := m.Etherbase(ctx)
+	// if err != nil {
+	// 	ctx.Logger().Error("failed to get etherbase", "err", err)
+	// 	return nil
+	// }
 
 	return &miner.BuildPayloadArgs{
-		Timestamp:    parent.Header().Time + 2, //nolint:gomnd // todo fix this arbitrary number.
-		FeeRecipient: etherbase,
-		Random:       common.Hash{}, /* todo: generated random */
-		Withdrawals:  make(types.Withdrawals, 0),
-		BeaconRoot:   &emptyHash,
-		Parent:       parent.Hash(),
+		Timestamp: parent.Header().Time + 2, //nolint:gomnd // todo fix this arbitrary number.
+		// FeeRecipient: etherbase,
+		Random:      common.Hash{}, /* todo: generated random */
+		Withdrawals: make(types.Withdrawals, 0),
+		BeaconRoot:  &emptyHash,
+		Parent:      parent.Hash(),
 	}
 }

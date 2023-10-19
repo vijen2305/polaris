@@ -180,7 +180,7 @@ func NewPolarisApp(
 
 	// Build the app using the app builder.
 	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
-	app.Polaris = polarruntime.New("http://localhost:8545", logger)
+	app.Polaris = polarruntime.New("http://127.0.0.1:8551", logger)
 
 	// Setup Polaris Runtime.
 	if err := app.Polaris.Build(app.BaseApp, app.EVMKeeper); err != nil {
