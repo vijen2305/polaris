@@ -33,11 +33,14 @@ type Builder struct {
 	*Service
 }
 
-func (b *Builder) BlockProposal(ctx context.Context) error {
+func (b *Builder) BlockProposal(ctx context.Context, payload interfaces.ExecutionData) error {
+	
+	latestValidHash, err :=
+	
 	return nil
 }
 
-func (b *Builder) BlockValidation(ctx context.Context, payload interfaces.ExecutionData) error {
+func (b *Builder) BlockValidation(ctx context.Context, payload interfaces.ExecutionData) ([]byte, error) {
 	// new Payload
 	latestValidHash, err := b.Service.NewPayload(ctx, payload, nil, nil)
 	if err != nil {
