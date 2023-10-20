@@ -20,49 +20,35 @@
 
 package main
 
-import (
-	"context"
-	"math/big"
-	"os"
-
-	"cosmossdk.io/log"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/miner"
-
-	"pkg.berachain.dev/polaris/beacon/eth"
-)
-
 // Block Builder Test.
-func main() {
-	// Configure logger, client, etherbase.
-	logger := log.NewLogger(os.Stdout).With("module", "main")
-	ethClient, _ := ethclient.Dial("http://localhost:8545")
-	client := eth.NewBuilderAPI(ethClient)
-	etherbase, _ := client.Etherbase(context.Background())
+// func main() {
+// 	// Configure logger, client, etherbase.
+// 	logger := log.NewLogger(os.Stdout).With("module", "main")
+// 	ethClient, _ := ethclient.Dial("http://localhost:8545")
+// 	client := eth.NewBuilderAPI(ethClient)
+// 	etherbase, _ := client.Etherbase(context.Background())
 
-	// Get Parent Header
-	latestBlockNumber, _ := ethClient.BlockNumber(context.Background())
-	parentHeader, _ := ethClient.HeaderByNumber(context.Background(),
-		big.NewInt(int64(latestBlockNumber)))
-	// block36, _ := client.HeaderByNumber(context.Background(), big.NewInt(36))
-	logger.Info("parent located", "parent-header", parentHeader.Hash(),
-		"parent-header-time", parentHeader.Time, "parent-header-number", parentHeader.Number)
+// 	// Get Parent Header
+// 	latestBlockNumber, _ := ethClient.BlockNumber(context.Background())
+// 	parentHeader, _ := ethClient.HeaderByNumber(context.Background(),
+// 		big.NewInt(int64(latestBlockNumber)))
+// 	// block36, _ := client.HeaderByNumber(context.Background(), big.NewInt(36))
+// 	logger.Info("parent located", "parent-header", parentHeader.Hash(),
+// 		"parent-header-time", parentHeader.Time, "parent-header-number", parentHeader.Number)
 
-	// Build block using the miner on the execution client.
-	builderResponse, err := client.BuildBlock(context.Background(), &miner.BuildPayloadArgs{
-		Timestamp:    parentHeader.Time + 5, //nolint:gomnd // testing script.
-		FeeRecipient: etherbase,
-		Random:       common.Hash{},
-		Withdrawals:  nil,
-		Parent:       parentHeader.ParentHash,
-		BeaconRoot:   nil,
-	})
-	logger.Info("block built", "builder-response", builderResponse, "err", err)
+// 	// Build block using the miner on the execution client.
+// 	builderResponse, err := client.BuildBlock(context.Background(), &miner.BuildPayloadArgs{
+// 		Timestamp:    parentHeader.Time + 5, //nolint:gomnd // testing script.
+// 		FeeRecipient: etherbase,
+// 		Random:       common.Hash{},
+// 		Withdrawals:  nil,
+// 		Parent:       parentHeader.ParentHash,
+// 		BeaconRoot:   nil,
+// 	})
+// 	logger.Info("block built", "builder-response", builderResponse, "err", err)
 
-	// SubmitNewPayload
-	payloadResponse, err := client.NewPayloadV2(context.Background(),
-		*builderResponse.ExecutionPayload)
-	logger.Info("block submitted to chain", "payload-response", payloadResponse, "err", err)
-}
+// 	// SubmitNewPayload
+// 	payloadResponse, err := client.NewPayloadV2(context.Background(),
+// 		*builderResponse.ExecutionPayload)
+// 	logger.Info("block submitted to chain", "payload-response", payloadResponse, "err", err)
+// }

@@ -61,6 +61,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
+	"pkg.berachain.dev/polaris/beacon/prysm"
 	evmv1alpha1 "pkg.berachain.dev/polaris/cosmos/api/polaris/evm/v1alpha1"
 	evmconfig "pkg.berachain.dev/polaris/cosmos/config"
 	signinglib "pkg.berachain.dev/polaris/cosmos/lib/signing"
@@ -86,6 +87,7 @@ func NewRootCmd() *cobra.Command {
 			depinject.Supply(
 				log.NewNopLogger(),
 				simtestutil.NewAppOptionsWithFlagHome(tempDir()),
+				&prysm.Service{},
 			),
 			depinject.Provide(
 				signinglib.ProvideNoopGetSigners[*evmv1alpha1.WrappedEthereumTransaction],

@@ -44,6 +44,8 @@ type Client struct {
 	RPCTimeout time.Duration
 	// RPCRetries is the number of retries before shutting down consensus client.
 	RPCRetries uint64
+	// JWTSecretPath is the path to the JWT secret.
+	JWTSecretPath string
 }
 
 // SetupCosmosConfig sets up the Cosmos SDK configuration to be compatible with the
@@ -63,9 +65,10 @@ func SetupCosmosConfig() {
 func DefaultConfig() *Config {
 	return &Config{
 		ExecutionClient: Client{
-			RPCDialURL: "http://localhost:8545",
-			RPCTimeout: time.Second * 3, //nolint:gomnd // default config.
-			RPCRetries: 3,               //nolint:gomnd // default config.
+			RPCDialURL:    "http://localhost:8551",
+			RPCTimeout:    time.Second * 3, //nolint:gomnd // default config.
+			RPCRetries:    3,               //nolint:gomnd // default config.
+			JWTSecretPath: "../polaris-geth/jwt.hex",
 		},
 	}
 }
@@ -97,6 +100,9 @@ func readConfigFromAppOptsParser(parser AppOptionsParser) (*Config, error) {
 		return nil, err
 	}
 	if conf.ExecutionClient.RPCTimeout, err = parser.GetTimeDuration(flags.RPCTimeout); err != nil {
+		return nil, err
+	}
+	if conf.ExecutionClient.JWTSecretPath, err = parser.GetString(flags.JWTSecretPath); err != nil {
 		return nil, err
 	}
 

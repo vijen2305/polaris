@@ -21,7 +21,8 @@
 package flags
 
 const (
-	RPCDialURL = "polaris.execution-client.rpc-dial-url"
-	RPCTimeout = "polaris.execution-client.rpc-timeout"
-	RPCRetries = "polaris.execution-client.rpc-retries"
+	RPCDialURL    = "polaris.execution-client.rpc-dial-url"
+	RPCTimeout    = "polaris.execution-client.rpc-timeout"
+	RPCRetries    = "polaris.execution-client.rpc-retries"
+	JWTSecretPath = "polaris.execution-client.jwt-secret-path" //nolint:gosec // false positive.
 )

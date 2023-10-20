@@ -22,23 +22,25 @@ package eth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/rpc"
+	prsymnetwork "github.com/prysmaticlabs/prysm/v4/network"
+	"github.com/prysmaticlabs/prysm/v4/network/authorization"
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/miner"
-	"github.com/prysmaticlabs/prysm/v4/network"
-	prsymnetwork "github.com/prysmaticlabs/prysm/v4/network"
-	"github.com/prysmaticlabs/prysm/v4/network/authorization"
+	"github.com/ethereum/go-ethereum/rpc"
+
 	"pkg.berachain.dev/polaris/beacon/log"
-	prsym "pkg.berachain.dev/polaris/beacon/prysm"
+	"pkg.berachain.dev/polaris/beacon/prysm"
 	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/eth/core"
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
@@ -47,7 +49,8 @@ import (
 type (
 	// BuilderAPI represents the `Miner` that exists on the backend of the execution layer.
 	BuilderAPI interface {
-		BuildBlock(context.Context, *miner.BuildPayloadArgs) (*engine.ExecutionPayloadEnvelope, error)
+		BuildBlock(context.Context, *miner.BuildPayloadArgs,
+		) (*engine.ExecutionPayloadEnvelope, error)
 		Etherbase(context.Context) (common.Address, error)
 		BlockByNumber(uint64) (*coretypes.Block, error)
 		CurrentBlock(ctx context.Context) (*coretypes.Block, error)
@@ -60,8 +63,8 @@ type (
 		SubscribeNewTxsEvent(chan<- core.NewTxsEvent) event.Subscription
 	}
 
-	ConsensusAPI interface {
-		prsym.EngineCaller
+	EngineAPI interface {
+		prysm.EngineCaller
 		BlockByNumber(context.Context, *big.Int) (*coretypes.Block, error)
 		BlockNumber(context.Context) (uint64, error)
 	}
@@ -69,13 +72,15 @@ type (
 
 // ExecutionClient represents the execution layer client.
 type ExecutionClient struct {
-	BlockBuilder BuilderAPI
-	TxPool       TxPoolAPI
-	Consensus    ConsensusAPI
+	BuilderAPI
+	TxPoolAPI
+	EngineAPI
 }
 
 // NewRemoteExecutionClient creates a new remote execution client.
-func NewRemoteExecutionClient(dialURL, jwtSecret string, logger log.Logger) (*ExecutionClient, error) {
+func NewRemoteExecutionClient(
+	dialURL, jwtSecretPath string,
+	logger log.Logger) (*ExecutionClient, error) {
 	ctx := context.Background()
 	var (
 		client  *rpc.Client
@@ -83,9 +88,12 @@ func NewRemoteExecutionClient(dialURL, jwtSecret string, logger log.Logger) (*Ex
 		err     error
 	)
 
-	jwtSecretR := common.FromHex(strings.TrimSpace(string(jwtSecret)))
+	jwtSecret, err := loadJWTSecret(jwtSecretPath)
+	if err != nil {
+		return nil, err
+	}
 
-	endpoint := NewPrysmEndpoint(dialURL, jwtSecretR)
+	endpoint := NewPrysmEndpoint(dialURL, jwtSecret)
 	client, err = newRPCClientWithAuth(ctx, nil, endpoint)
 	if err != nil {
 		return nil, err
@@ -96,7 +104,6 @@ func NewRemoteExecutionClient(dialURL, jwtSecret string, logger log.Logger) (*Ex
 		logger.Info("waiting for connection to execution layer", "dial-url", dialURL)
 		ethClient = ethclient.NewClient(client)
 		chainID, err = ethClient.ChainID(ctx)
-		fmt.Println(err)
 		if err != nil {
 			continue
 		}
@@ -107,17 +114,31 @@ func NewRemoteExecutionClient(dialURL, jwtSecret string, logger log.Logger) (*Ex
 		return nil, fmt.Errorf("failed to establish connection to execution layer: %w", err)
 	}
 
-	prsymClient := prsym.NewEngineClientService(ethClient)
+	prsymClient := prysm.NewEngineClientService(ethClient)
 
 	return &ExecutionClient{
 		// BlockBuilder: &builderAPI{Client: client},
-		TxPool:    &txPoolAPI{Client: ethClient},
-		Consensus: prsymClient,
+		TxPoolAPI: &txPoolAPI{Client: ethClient},
+		EngineAPI: prsymClient,
 	}, nil
 }
 
+func loadJWTSecret(filepath string) ([]byte, error) {
+	if data, err := os.ReadFile(filepath); err == nil {
+		jwtSecret := common.FromHex(strings.TrimSpace(string(data)))
+		if len(jwtSecret) == 32 { //nolint:gomnd // false positive.
+			// log.Info("Loaded JWT secret file", "path", filepath, "crc32",
+			// ("%#x", crc32.ChecksumIEEE(jwtSecret))
+			return jwtSecret, nil
+		}
+	}
+	// log.Error("Invalid JWT secret", "path", filepath, "length", len(jwtSecret))
+	return nil, errors.New("invalid JWT secret")
+}
+
 // Initializes an RPC connection with authentication headers.
-func newRPCClientWithAuth(ctx context.Context, headersMap map[string]string, endpoint network.Endpoint) (*rpc.Client, error) {
+func newRPCClientWithAuth(ctx context.Context, headersMap map[string]string,
+	endpoint prsymnetwork.Endpoint) (*rpc.Client, error) {
 	headers := http.Header{}
 	if endpoint.Auth.Method != authorization.None {
 		header, err := endpoint.Auth.ToHeaderValue()
@@ -131,26 +152,24 @@ func newRPCClientWithAuth(ctx context.Context, headersMap map[string]string, end
 			continue
 		}
 		keyValue := strings.Split(h, "=")
-		if len(keyValue) < 2 {
+		if len(keyValue) < 2 { //nolint:gomnd // false positive.
 			// log.LoggerWarn("Incorrect HTTP header flag format. Skipping %v", keyValue[0])
 			continue
 		}
 		headers.Set(keyValue[0], strings.Join(keyValue[1:], "="))
 	}
 
-	fmt.Println("HEADERS", headers)
-	return network.NewExecutionRPCClient(ctx, endpoint, headers)
+	return prsymnetwork.NewExecutionRPCClient(ctx, endpoint, headers)
 }
 
 func NewPrysmEndpoint(endpointString string, secret []byte) prsymnetwork.Endpoint {
 	if len(secret) == 0 {
-		return network.HttpEndpoint(endpointString)
+		return prsymnetwork.HttpEndpoint(endpointString)
 	}
 	// Overwrite authorization type for all endpoints to be of a bearer type.
-	hEndpoint := network.HttpEndpoint(endpointString)
+	hEndpoint := prsymnetwork.HttpEndpoint(endpointString)
 	hEndpoint.Auth.Method = authorization.Bearer
 	hEndpoint.Auth.Value = string(secret)
 
 	return hEndpoint
-
 }

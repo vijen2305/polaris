@@ -118,7 +118,11 @@ func NewPolarisApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *SimApp {
 	var (
-		app        = &SimApp{}
+		polaris = polarruntime.MustNew(appOpts, logger)
+		app     = &SimApp{
+			Polaris: polaris,
+		}
+
 		appBuilder *runtime.AppBuilder
 		// merge the AppConfig and other configuration in one config
 		appConfig = depinject.Configs(
@@ -132,6 +136,7 @@ func NewPolarisApp(
 				appOpts,
 				// supply the logger
 				logger,
+				polaris,
 				//
 				// AUTH
 				//
@@ -180,10 +185,9 @@ func NewPolarisApp(
 
 	// Build the app using the app builder.
 	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
-	app.Polaris = polarruntime.New("http://127.0.0.1:8551", logger)
 
 	// Setup Polaris Runtime.
-	if err := app.Polaris.Build(app.BaseApp, app.EVMKeeper); err != nil {
+	if err := app.Polaris.Build(app.BaseApp); err != nil {
 		panic(err)
 	}
 

@@ -25,6 +25,7 @@ import (
 	"cosmossdk.io/depinject"
 	store "cosmossdk.io/store/types"
 
+	"pkg.berachain.dev/polaris/beacon/prysm"
 	modulev1alpha1 "pkg.berachain.dev/polaris/cosmos/api/polaris/evm/module/v1alpha1"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/keeper"
 )
@@ -43,6 +44,8 @@ type DepInjectInput struct {
 	ModuleKey depinject.OwnModuleKey
 	Config    *modulev1alpha1.Module
 	Key       *store.KVStoreKey
+
+	ExecutionClient prysm.EngineCaller
 }
 
 // DepInjectOutput is the output for the dep inject framework.
@@ -56,6 +59,7 @@ type DepInjectOutput struct {
 // ProvideModule is a function that provides the module to the application.
 func ProvideModule(in DepInjectInput) DepInjectOutput {
 	k := keeper.NewKeeper(
+		in.ExecutionClient,
 		in.Key,
 	)
 	m := NewAppModule(k)

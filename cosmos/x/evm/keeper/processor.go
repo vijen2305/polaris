@@ -30,7 +30,7 @@ import (
 )
 
 func (k *Keeper) ProcessPayloadEnvelope(
-	ctx context.Context, msg *evmtypes.WrappedPayloadEnvelope,
+	_ context.Context, msg *evmtypes.WrappedPayloadEnvelope,
 ) (*evmtypes.WrappedPayloadEnvelopeResponse, error) {
 	var (
 		// payloadStatus engine.PayloadStatusV1
@@ -50,7 +50,8 @@ func (k *Keeper) ProcessPayloadEnvelope(
 	// }
 
 	// payloadAttributes := &engine.PayloadAttributes{
-	// 	Timestamp:             envelope.ExecutionPayload.Timestamp + 2, //nolint:gomnd,lll // todo figure out how to set.
+	// 	Timestamp:             envelope.ExecutionPayload.Timestamp + 2,
+	// //nolint:gomnd,lll // todo figure out how to set.
 	// 	Random:                envelope.ExecutionPayload.Random,
 	// 	SuggestedFeeRecipient: envelope.ExecutionPayload.FeeRecipient,
 	// 	Withdrawals:           envelope.ExecutionPayload.Withdrawals,

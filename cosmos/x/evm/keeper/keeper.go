@@ -26,30 +26,27 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"pkg.berachain.dev/polaris/beacon/eth"
+	"pkg.berachain.dev/polaris/beacon/prysm"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/types"
 )
 
 type (
 	Keeper struct {
 		// consensusAPI is the consensus API
-		executionClient *eth.ExecutionClient
+		executionClient prysm.EngineCaller
 		storeKey        storetypes.StoreKey
 	}
 )
 
 // NewKeeper creates new instances of the polaris Keeper.
 func NewKeeper(
+	executionClient prysm.EngineCaller,
 	storeKey storetypes.StoreKey,
 ) *Keeper {
 	return &Keeper{
-		storeKey: storeKey,
+		executionClient: executionClient,
+		storeKey:        storeKey,
 	}
-}
-
-func (k *Keeper) Setup(executionClient *eth.ExecutionClient) error {
-	k.executionClient = executionClient
-	return nil
 }
 
 // Logger returns a module-specific logger.

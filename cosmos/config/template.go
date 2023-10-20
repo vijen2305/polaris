@@ -30,12 +30,15 @@ const (
 
 [polaris.execution-client]
 # HTTP url of the execution client JSON-RPC endpoint.
-dial-url = "{{ .Polaris.ExecutionClient.RPCDialURL }}"
+rpc-dial-url = "{{ .Polaris.ExecutionClient.RPCDialURL }}"
 
 # RPC timeout for execution client requests.
 rpc-timeout = "{{ .Polaris.ExecutionClient.RPCTimeout }}"
 
 # Number of retries before shutting down consensus client.
 rpc-retries = "{{.Polaris.ExecutionClient.RPCRetries}}"
+
+# Path to the execution layer JWT-secret
+jwt-secret-path = "{{.Polaris.ExecutionClient.JWTSecretPath}}"
 `
 )

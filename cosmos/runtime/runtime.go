@@ -24,12 +24,14 @@ import (
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 
 	"pkg.berachain.dev/polaris/beacon/eth"
+	"pkg.berachain.dev/polaris/cosmos/config"
 	antelib "pkg.berachain.dev/polaris/cosmos/lib/ante"
 	libtx "pkg.berachain.dev/polaris/cosmos/lib/tx"
 	"pkg.berachain.dev/polaris/cosmos/runtime/miner"
@@ -64,40 +66,52 @@ type Polaris struct {
 	logger log.Logger
 }
 
-// ProvidePolarisRuntime creates a new Polaris runtime from the provided
+// New creates a new Polaris runtime from the provided
 // dependencies.
 func New(
-	dialURL string,
+	appOpts servertypes.AppOptions,
 	logger log.Logger,
-) *Polaris {
+) (*Polaris, error) {
 	var err error
 	p := &Polaris{
 		logger: logger,
 	}
 
+	// Read the configuration from the cosmos app options
+	cfg, err := config.ReadConfigFromAppOpts(appOpts)
+	if err != nil {
+		return nil, err
+	}
+	// Connect to the execution client.
 	p.ExecutionClient, err = eth.NewRemoteExecutionClient(
-		dialURL, "ba6d51b12d7854243e2f91fc66ea419fc587f7f78cc63e6f2925df1469962a60", logger,
+		cfg.ExecutionClient.RPCDialURL, cfg.ExecutionClient.JWTSecretPath, logger,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// New creates a new Polaris runtime from the provided
+// dependencies, panics on error.
+func MustNew(appOpts servertypes.AppOptions, logger log.Logger) *Polaris {
+	p, err := New(appOpts, logger)
 	if err != nil {
 		panic(err)
 	}
-
 	return p
 }
 
 // Build is a function that sets up the Polaris struct.
 // It takes a BaseApp and an EVMKeeper as arguments.
 // It returns an error if the setup fails.
-func (p *Polaris) Build(app CosmosApp, ek EVMKeeper) error {
-	p.WrappedTxPool = txpool.New(p.TxPool)
+func (p *Polaris) Build(app CosmosApp) error {
+	p.WrappedTxPool = txpool.New(p.TxPoolAPI)
 	app.SetMempool(p.WrappedTxPool)
 
-	p.WrappedMiner = miner.New(p.ExecutionClient.Consensus)
+	p.WrappedMiner = miner.New(p.ExecutionClient.EngineAPI, p.logger)
 	app.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
-
-	if err := ek.Setup(p.ExecutionClient); err != nil {
-		return err
-	}
 
 	// Set the ante handler to nil, since it is not needed.
 	app.SetAnteHandler(antelib.NewAnteHandler())
