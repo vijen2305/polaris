@@ -22,7 +22,7 @@ package prysm
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
@@ -30,30 +30,52 @@ import (
 )
 
 type Builder struct {
-	*Service
+	EngineCaller
 }
 
-func (b *Builder) BlockProposal(ctx context.Context, payload interfaces.ExecutionData) error {
-	
-	latestValidHash, err :=
-	
-	return nil
-}
-
-func (b *Builder) BlockValidation(ctx context.Context, payload interfaces.ExecutionData) ([]byte, error) {
-	// new Payload
-	latestValidHash, err := b.Service.NewPayload(ctx, payload, nil, nil)
+func (b *Builder) BlockProposal(
+	ctx context.Context, payload interfaces.ExecutionData, attrs payloadattribute.Attributer,
+) (interfaces.ExecutionData, error) {
+	payloadID, latestValidHash, err := b.BlockValidation(ctx, payload)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if latestValidHash == nil {
+		return nil, err
+	}
+
+	builtPayload, _, _, err := b.GetPayload(ctx, *payloadID, 100000000000)
+	// todo: wait for slot tick or equivalent
+
+	return builtPayload, err
+}
+
+// BlockValidation builds a payload from the provided execution data, and submits it to
+// the execution client. It then submits a forkchoice update with the updated
+// valid hash returned by the execution client.
+// This should be called by a node when it receives Execution Data as part of
+// beacon chain consensus.
+// receives payload -> get latestValidHash from our execution client -> forkchoice locally.
+func (b *Builder) BlockValidation(
+	ctx context.Context, payload interfaces.ExecutionData,
+) (*enginev1.PayloadIDBytes, []byte, error) {
+	// new Payload
+	latestValidHash, err := b.NewPayload(ctx, payload, nil, nil)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// TODO: wait for potential reorg?? on new payload.
-	time.Sleep(800 * time.Millisecond) //nolint:gomnd // temp.
-	_, _, err = b.Service.ForkchoiceUpdated(ctx, &enginev1.ForkchoiceState{
-		HeadBlockHash:      latestValidHash,
+	// time.Sleep(800 * time.Millisecond) //nolint:gomnd // temp.
+	var payloadID *enginev1.PayloadIDBytes
+	payloadID, _, err = b.ForkchoiceUpdated(ctx, &enginev1.ForkchoiceState{
+		HeadBlockHash: latestValidHash,
+		// The two below are technically incorrect? These should be set later imo.
 		SafeBlockHash:      latestValidHash,
 		FinalizedBlockHash: latestValidHash,
-	}, payloadattribute.EmptyWithVersion(2))
+	}, payloadattribute.EmptyWithVersion(3))
 
-	return err
+	fmt.Println("PAYLOAD ID", payloadID)
+
+	return payloadID, latestValidHash, err
 }

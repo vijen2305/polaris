@@ -28,6 +28,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
 	pb "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
 
@@ -37,7 +38,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
 
 	"pkg.berachain.dev/polaris/beacon/eth"
@@ -50,7 +50,7 @@ import (
 // EnvelopeSerializer is used to convert an envelope into a byte slice that represents
 // a cosmos sdk.Tx.
 type EnvelopeSerializer interface {
-	ToSdkTxBytes(*engine.ExecutionPayloadEnvelope, uint64) ([]byte, error)
+	ToSdkTxBytes(interfaces.ExecutionData, uint64) ([]byte, error)
 }
 
 // Miner implements the baseapp.TxSelector interface.
@@ -81,18 +81,26 @@ func (m *Miner) Init(serializer EnvelopeSerializer) {
 func (m *Miner) PrepareProposal(
 	ctx sdk.Context, _ *abci.RequestPrepareProposal,
 ) (*abci.ResponsePrepareProposal, error) {
-	var _ []byte
+	var data interfaces.ExecutionData
 	var err error
-	if _, err = m.buildBlock(ctx); err != nil {
+	var bz []byte
+	if data, err = m.buildBlock(ctx); err != nil {
 		return nil, err
 	}
-	return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, err
+
+	bz, err = m.serializer.ToSdkTxBytes(data, 30000000)
+	if err != nil {
+		return nil, err
+	}
+
+	return &abci.ResponsePrepareProposal{Txs: [][]byte{bz}}, err
 }
 
 // finalizedBlockHash returns the block hash of the finalized block corresponding to the given
 // number or nil if doesn't exist in the chain.
 func (m *Miner) finalizedBlockHash(number uint64) *common.Hash {
 	var finalizedNumber = number
+	// The code below is basically faking only updating the finalized block once per epoch.
 	// if number%devEpochLength == 0 {
 	// } else {
 	// 	finalizedNumber = (number - 1) / devEpochLength * devEpochLength
@@ -108,61 +116,66 @@ func (m *Miner) finalizedBlockHash(number uint64) *common.Hash {
 
 // buildBlock builds and submits a payload, it also waits for the txs
 // to resolve from the underying worker.
-func (m *Miner) buildBlock(ctx sdk.Context) ([]byte, error) {
+func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
+	builder := (&prysm.Builder{EngineCaller: m.EngineAPI.(*prysm.Service)})
 	var (
 		err error
 		// envelope *engine.ExecutionPayloadEnvelope
 		sCtx = sdk.UnwrapSDKContext(ctx)
 	)
 
+	var payloadID *pb.PayloadIDBytes
 	// Reset to CurrentBlock in case of the chain was rewound
-	latestBlock, err := m.EngineAPI.LatestExecutionBlock(ctx)
+	// ALL THIS CODE DOES IS FORCES RESETTING TO THE LATEST EXECUTION BLOCK
+	// CALLS JSON RPC with "latest" block param
+	{
+		latestBlock, err := m.EngineAPI.LatestExecutionBlock(ctx)
+		if err != nil {
+			m.logger.Error("failed to get block number", "err", err)
+		}
+
+		if !bytes.Equal(m.curForkchoiceState.HeadBlockHash, latestBlock.Hash.Bytes()) {
+			finalizedHash := m.finalizedBlockHash(latestBlock.Number.Uint64())
+			m.setCurrentState(latestBlock.Hash.Bytes(), finalizedHash.Bytes())
+		}
+
+		tstamp := sCtx.BlockTime()
+		var random [32]byte
+		if _, err = rand.Read(random[:]); err != nil {
+			return nil, err
+		}
+
+		attrs, err := payloadattribute.New(&pb.PayloadAttributesV2{
+			Timestamp:             uint64(tstamp.Unix()),
+			SuggestedFeeRecipient: m.etherbase.Bytes(),
+			Withdrawals:           nil,
+			PrevRandao:            append([]byte{}, random[:]...),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		payloadID, _, err = m.EngineAPI.ForkchoiceUpdated(ctx,
+			m.curForkchoiceState, attrs)
+		if err != nil {
+			m.logger.Error("failed to get forkchoice updated", "err", err)
+		}
+		time.Sleep(100 * time.Millisecond) //nolint:gomnd // temp.
+	}
+
+	builtPayload, _, _, err := builder.GetPayload(ctx, *payloadID, 100000000000)
 	if err != nil {
-		m.logger.Error("failed to get block number", "err", err)
-	}
-
-	if !bytes.Equal(m.curForkchoiceState.HeadBlockHash, latestBlock.Hash.Bytes()) {
-		finalizedHash := m.finalizedBlockHash(latestBlock.Number.Uint64())
-		m.setCurrentState(latestBlock.Hash.Bytes(), finalizedHash.Bytes())
-	}
-
-	tstamp := sCtx.BlockTime()
-	var random [32]byte
-	if _, err = rand.Read(random[:]); err != nil {
 		return nil, err
 	}
 
-	attrs, err := payloadattribute.New(&pb.PayloadAttributesV2{
-		Timestamp:             uint64(tstamp.Unix()),
-		SuggestedFeeRecipient: m.etherbase.Bytes(),
-		Withdrawals:           nil,
-		PrevRandao:            append([]byte{}, random[:]...),
-	})
-	if err != nil {
-		return nil, err
-	}
+	var finalizedHash []byte
+	finalizedHash = builtPayload.BlockHash()
+	// finalizedHash, when there is epochs, could be in the past. But since
+	// we are finalizing every block, the builtPayload and the finalized Hash are the same.
+	m.setCurrentState(builtPayload.BlockHash(), finalizedHash)
 
-	fcResponse, _, err := m.EngineAPI.ForkchoiceUpdated(ctx,
-		m.curForkchoiceState, attrs)
-	if err != nil {
-		m.logger.Error("failed to get forkchoice updated", "err", err)
-	}
-	time.Sleep(200 * time.Millisecond) //nolint:gomnd // temp.
-	// // Build Payload
-	// parent := m.CurrentBlock(ctx)
-	// if envelope, err = m.BuildBlock(ctx, m.constructPayloadArgs(sCtx, parent)); err != nil {
-	// 	sCtx.Logger().Error("failed to build payload", "err", err)
-	// 	return nil, err
-	// }
-
-	data, _, _, err := m.EngineAPI.GetPayload(ctx, *fcResponse, 100000000000) //nolint:gomnd // temp.
-	if err != nil {
-		m.logger.Error("failed to get payload", "err", err)
-	}
-	time.Sleep(200 * time.Millisecond) //nolint:gomnd // temp.
-
-	_ = (&prysm.Builder{Service: m.EngineAPI.(*prysm.Service)}).BlockValidation(ctx, data)
-	return []byte{}, nil
+	// _, _, err = builder.BlockValidation(ctx, builtPayload)
+	return builtPayload, err
 }
 
 // setCurrentState sets the current forkchoice state.

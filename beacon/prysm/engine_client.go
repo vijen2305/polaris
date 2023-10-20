@@ -41,7 +41,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/primitives"
 	pb "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
 	"github.com/prysmaticlabs/prysm/v4/runtime/version"
-	"github.com/prysmaticlabs/prysm/v4/time/slots"
 	"go.opencensus.io/trace"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -136,8 +135,6 @@ func (s *Service) NewPayload(ctx context.Context, payload interfaces.ExecutionDa
 		return result.LatestValidHash, execution.ErrInvalidPayloadStatus
 	case pb.PayloadStatus_VALID:
 		return result.LatestValidHash, nil
-	case pb.PayloadStatus_UNKNOWN:
-		return nil, execution.ErrUnknownPayloadStatus
 	default:
 		return nil, execution.ErrUnknownPayloadStatus
 	}
@@ -202,13 +199,14 @@ func (s *Service) ForkchoiceUpdated(
 	// 	// log.WithError(errors.New(result.ValidationError)).Error("Got a validation error in
 	// 	//  forkChoiceUpdated")
 	// }
+
 	resp := result.Status
 	switch resp.Status {
 	case pb.PayloadStatus_SYNCING:
 		return nil, nil, execution.ErrAcceptedSyncingPayloadStatus
 	case pb.PayloadStatus_INVALID:
 		return nil, resp.LatestValidHash, execution.ErrInvalidPayloadStatus
-	case pb.PayloadStatus_VALID, pb.PayloadStatus_ACCEPTED: // todo: is this okay?
+	case pb.PayloadStatus_VALID:
 		return result.PayloadId, resp.LatestValidHash, nil
 	case pb.PayloadStatus_INVALID_BLOCK_HASH:
 		return nil, nil, execution.ErrInvalidBlockHashPayloadStatus
@@ -234,47 +232,47 @@ func (s *Service) GetPayload(ctx context.Context, payloadID [8]byte, slot primit
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
 
-	if slots.ToEpoch(slot) >= params.BeaconConfig().DenebForkEpoch {
-		result := &pb.ExecutionPayloadDenebWithValueAndBlobsBundle{}
-		err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethodV3,
-			pb.PayloadIDBytes(payloadID))
-		if err != nil {
-			return nil, nil, false, handleRPCError(err)
-		}
-		ed, err := blocks.WrappedExecutionPayloadDeneb(result.Payload,
-			blocks.PayloadValueToGwei(result.Value))
-		if err != nil {
-			return nil, nil, false, err
-		}
-		return ed, result.BlobsBundle, result.ShouldOverrideBuilder, nil
-	}
+	// if slots.ToEpoch(slot) >= params.BeaconConfig().DenebForkEpoch {
+	// 	result := &pb.ExecutionPayloadDenebWithValueAndBlobsBundle{}
+	// 	err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethodV3,
+	// 		pb.PayloadIDBytes(payloadID))
+	// 	if err != nil {
+	// 		return nil, nil, false, handleRPCError(err)
+	// 	}
+	// 	ed, err := blocks.WrappedExecutionPayloadDeneb(result.Payload,
+	// 		blocks.PayloadValueToGwei(result.Value))
+	// 	if err != nil {
+	// 		return nil, nil, false, err
+	// 	}
+	// 	return ed, result.BlobsBundle, result.ShouldOverrideBuilder, nil
+	// }
 
-	if slots.ToEpoch(slot) >= params.BeaconConfig().CapellaForkEpoch {
-		result := &pb.ExecutionPayloadCapellaWithValue{}
-		err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethodV2,
-			pb.PayloadIDBytes(payloadID))
-		if err != nil {
-			return nil, nil, false, handleRPCError(err)
-		}
-		ed, err := blocks.WrappedExecutionPayloadCapella(result.Payload,
-			blocks.PayloadValueToGwei(result.Value))
-		if err != nil {
-			return nil, nil, false, err
-		}
-		return ed, nil, false, nil
-	}
-
-	result := &pb.ExecutionPayload{}
-	err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethod,
-		pb.PayloadIDBytes(payloadID),
-	)
+	// if slots.ToEpoch(slot) >= params.BeaconConfig().CapellaForkEpoch {
+	result := &pb.ExecutionPayloadCapellaWithValue{}
+	err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethodV2,
+		pb.PayloadIDBytes(payloadID))
 	if err != nil {
 		return nil, nil, false, handleRPCError(err)
 	}
-	ed, err := blocks.WrappedExecutionPayload(result)
+	ed, err := blocks.WrappedExecutionPayloadCapella(result.Payload,
+		blocks.PayloadValueToGwei(result.Value))
 	if err != nil {
 		return nil, nil, false, err
 	}
+	// return ed, nil, false, nil
+	// }
+
+	// result := &pb.ExecutionPayload{}
+	// err := s.rpcClient.CallContext(ctx, result, execution.GetPayloadMethod,
+	// 	pb.PayloadIDBytes(payloadID),
+	// )
+	// if err != nil {
+	// 	return nil, nil, false, handleRPCError(err)
+	// }
+	// ed, err := blocks.WrappedExecutionPayload(result)
+	// if err != nil {
+	// 	return nil, nil, false, err
+	// }
 	return ed, nil, false, nil
 }
 

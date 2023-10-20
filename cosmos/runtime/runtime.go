@@ -21,14 +21,14 @@
 package runtime
 
 import (
+	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
+
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
-
-	"github.com/ethereum/go-ethereum/beacon/engine"
 
 	"pkg.berachain.dev/polaris/beacon/eth"
 	"pkg.berachain.dev/polaris/cosmos/config"
@@ -123,7 +123,7 @@ func (p *Polaris) Build(app CosmosApp) error {
 // It takes a client context as an argument and returns an error if the setup fails.
 func (p *Polaris) SetupServices(clientCtx client.Context) error {
 	// Initialize the miner with a new execution payload serializer.
-	p.WrappedMiner.Init(libtx.NewSerializer[*engine.ExecutionPayloadEnvelope](
+	p.WrappedMiner.Init(libtx.NewSerializer[interfaces.ExecutionData](
 		clientCtx.TxConfig, evmtypes.WrapPayload))
 
 	// Initialize the txpool with a new transaction serializer.

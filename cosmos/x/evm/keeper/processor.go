@@ -24,51 +24,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/beacon/engine"
-
+	"pkg.berachain.dev/polaris/beacon/prysm"
 	evmtypes "pkg.berachain.dev/polaris/cosmos/x/evm/types"
 )
 
 func (k *Keeper) ProcessPayloadEnvelope(
-	_ context.Context, msg *evmtypes.WrappedPayloadEnvelope,
+	ctx context.Context, msg *evmtypes.WrappedPayloadEnvelope,
 ) (*evmtypes.WrappedPayloadEnvelopeResponse, error) {
-	var (
-		// payloadStatus engine.PayloadStatusV1
-		envelope engine.ExecutionPayloadEnvelope
-		err      error
-	)
+	// var (
+	// 	// payloadStatus engine.PayloadStatusV1
+	// 	envelope engine.ExecutionPayloadEnvelope
+	// 	err      error
+	// )
 
-	if err = envelope.UnmarshalJSON(msg.Data); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal payload envelope: %w", err)
+	// if err = envelope.UnmarshalJSON(msg.Data); err != nil {
+	// 	return nil, fmt.Errorf("failed to unmarshal payload envelope: %w", err)
+	// }
+
+	builder := (&prysm.Builder{EngineCaller: k.executionClient})
+	payloadID, _, err := builder.BlockValidation(ctx, msg.UnwrapPayload())
+	if err != nil {
+		fmt.Println("PANICCCCCCCCC", err)
 	}
 
-	// // Prepare should be moved to the blockchain? THIS IS VERY HOOD YES NEEDS TO BE MOVED.
-	// if payloadStatus, err = k.executionClient.Consensus.NewPayloadV2(ctx,
-	// 	*envelope.ExecutionPayload,
-	// ); err != nil {
-	// 	return nil, err
-	// }
-
-	// payloadAttributes := &engine.PayloadAttributes{
-	// 	Timestamp:             envelope.ExecutionPayload.Timestamp + 2,
-	// //nolint:gomnd,lll // todo figure out how to set.
-	// 	Random:                envelope.ExecutionPayload.Random,
-	// 	SuggestedFeeRecipient: envelope.ExecutionPayload.FeeRecipient,
-	// 	Withdrawals:           envelope.ExecutionPayload.Withdrawals,
-	// }
-
-	// update := engine.ForkchoiceStateV1{
-	// 	SafeBlockHash:      *payloadStatus.LatestValidHash,
-	// 	FinalizedBlockHash: *payloadStatus.LatestValidHash,
-	// 	HeadBlockHash:      *payloadStatus.LatestValidHash,
-	// }
-
-	// // Prepare should be moved to the blockchain? THIS IS VERY HOOD YES NEEDS TO BE MOVED.
-	// if _, err = k.executionClient.Consensus.ForkchoiceUpdatedV2(
-	// 	ctx, update, payloadAttributes,
-	// ); err != nil {
-	// 	return nil, err
-	// }
+	k.Logger(ctx).Info("Processed Payload ID", "payloadID", payloadID, "TODO: FIGURE OUT WHY NIL")
 
 	return &evmtypes.WrappedPayloadEnvelopeResponse{}, nil
 }

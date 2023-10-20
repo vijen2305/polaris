@@ -23,7 +23,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/beacon/engine"
+	"github.com/prysmaticlabs/prysm/v4/consensus-types/blocks"
+	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
+	enginev1 "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
 
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 )
@@ -50,8 +52,8 @@ func (etr *WrappedEthereumTransaction) Unwrap() *coretypes.Transaction {
 }
 
 // WrapPayload sets the payload data from an `engine.ExecutionPayloadEnvelope`.
-func WrapPayload(envelope *engine.ExecutionPayloadEnvelope) (*WrappedPayloadEnvelope, error) {
-	bz, err := envelope.MarshalJSON()
+func WrapPayload(envelope interfaces.ExecutionData) (*WrappedPayloadEnvelope, error) {
+	bz, err := envelope.MarshalSSZ()
 	if err != nil {
 		return nil, fmt.Errorf("failed to wrap payload: %w", err)
 	}
@@ -62,10 +64,16 @@ func WrapPayload(envelope *engine.ExecutionPayloadEnvelope) (*WrappedPayloadEnve
 }
 
 // AsPayload extracts the payload as an `engine.ExecutionPayloadEnvelope`.
-func (wpe *WrappedPayloadEnvelope) UnwrapPayload() *engine.ExecutionPayloadEnvelope {
-	payload := new(engine.ExecutionPayloadEnvelope)
-	if err := payload.UnmarshalJSON(wpe.Data); err != nil {
+func (wpe *WrappedPayloadEnvelope) UnwrapPayload() interfaces.ExecutionData {
+	payload := new(enginev1.ExecutionPayloadCapellaWithValue)
+	payload.Payload = new(enginev1.ExecutionPayloadCapella)
+	if err := payload.Payload.UnmarshalSSZ(wpe.Data); err != nil {
 		return nil
 	}
-	return payload
+
+	data, err := blocks.WrappedExecutionPayloadCapella(payload.Payload, blocks.PayloadValueToGwei(payload.Value))
+	if err != nil {
+		return nil
+	}
+	return data
 }

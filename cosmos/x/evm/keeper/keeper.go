@@ -21,6 +21,8 @@
 package keeper
 
 import (
+	"context"
+
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
@@ -50,6 +52,6 @@ func NewKeeper(
 }
 
 // Logger returns a module-specific logger.
-func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With(types.ModuleName)
+func (k *Keeper) Logger(ctx context.Context) log.Logger {
+	return sdk.UnwrapSDKContext(ctx).Logger().With(types.ModuleName)
 }
