@@ -33,10 +33,8 @@ import (
 	prsymnetwork "github.com/prysmaticlabs/prysm/v4/network"
 	"github.com/prysmaticlabs/prysm/v4/network/authorization"
 
-	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
-	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"pkg.berachain.dev/polaris/beacon/log"
@@ -47,15 +45,6 @@ import (
 )
 
 type (
-	// BuilderAPI represents the `Miner` that exists on the backend of the execution layer.
-	BuilderAPI interface {
-		BuildBlock(context.Context, *miner.BuildPayloadArgs,
-		) (*engine.ExecutionPayloadEnvelope, error)
-		Etherbase(context.Context) (common.Address, error)
-		BlockByNumber(uint64) (*coretypes.Block, error)
-		CurrentBlock(ctx context.Context) (*coretypes.Block, error)
-	}
-
 	// TxPool represents the `TxPool` that exists on the backend of the execution layer.
 	TxPoolAPI interface {
 		Add([]*coretypes.Transaction, bool, bool) []error
@@ -65,14 +54,12 @@ type (
 
 	EngineAPI interface {
 		prysm.EngineCaller
-		BlockByNumber(context.Context, *big.Int) (*coretypes.Block, error)
-		BlockNumber(context.Context) (uint64, error)
+		prysm.ExecutionBlockCaller
 	}
 )
 
 // ExecutionClient represents the execution layer client.
 type ExecutionClient struct {
-	BuilderAPI
 	TxPoolAPI
 	EngineAPI
 }
@@ -117,7 +104,6 @@ func NewRemoteExecutionClient(
 	prsymClient := prysm.NewEngineClientService(ethClient)
 
 	return &ExecutionClient{
-		// BlockBuilder: &builderAPI{Client: client},
 		TxPoolAPI: &txPoolAPI{Client: ethClient},
 		EngineAPI: prsymClient,
 	}, nil

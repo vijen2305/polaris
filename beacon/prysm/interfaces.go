@@ -22,7 +22,9 @@ package prysm
 
 import (
 	"context"
+	"math/big"
 
+	"github.com/prysmaticlabs/prysm/v4/beacon-chain/execution/types"
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/primitives"
@@ -67,4 +69,9 @@ type EngineCaller interface {
 	ExecutionBlockByHash(ctx context.Context, hash common.Hash,
 		withTxs bool) (*pb.ExecutionBlock, error)
 	GetTerminalBlockHash(ctx context.Context, transitionTime uint64) ([]byte, bool, error)
+}
+
+type ExecutionBlockCaller interface {
+	LatestExecutionBlock(context.Context) (*pb.ExecutionBlock, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.HeaderInfo, error)
 }

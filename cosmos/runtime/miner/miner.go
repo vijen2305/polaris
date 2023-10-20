@@ -41,7 +41,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"pkg.berachain.dev/polaris/beacon/eth"
-	"pkg.berachain.dev/polaris/eth/core/types"
+	"pkg.berachain.dev/polaris/beacon/prysm"
 )
 
 // emptyHash is a common.Hash initialized to all zeros.
@@ -98,9 +98,9 @@ func (m *Miner) finalizedBlockHash(number uint64) *common.Hash {
 	// 	finalizedNumber = (number - 1) / devEpochLength * devEpochLength
 	// }
 
-	if finalizedBlock, err := m.EngineAPI.BlockByNumber(context.Background(),
+	if finalizedBlock, err := m.EngineAPI.HeaderByNumber(context.Background(),
 		big.NewInt(int64(finalizedNumber))); finalizedBlock != nil && err == nil {
-		fh := finalizedBlock.Hash()
+		fh := finalizedBlock.Hash
 		return &fh
 	}
 	return nil
@@ -116,19 +116,14 @@ func (m *Miner) buildBlock(ctx sdk.Context) ([]byte, error) {
 	)
 
 	// Reset to CurrentBlock in case of the chain was rewound
-	number, err := m.EngineAPI.BlockNumber(ctx)
+	latestBlock, err := m.EngineAPI.LatestExecutionBlock(ctx)
 	if err != nil {
 		m.logger.Error("failed to get block number", "err", err)
 	}
 
-	var header *types.Block
-	if header, err = m.EngineAPI.BlockByNumber(
-		ctx, big.NewInt(int64(number))); err != nil {
-		m.logger.Error("failed to get block by number", "err", err)
-	} else if !bytes.Equal(m.curForkchoiceState.HeadBlockHash, header.Hash().Bytes()) {
-		finalizedHash := m.finalizedBlockHash(header.Number().Uint64())
-
-		m.setCurrentState(header.Hash().Bytes(), finalizedHash.Bytes())
+	if !bytes.Equal(m.curForkchoiceState.HeadBlockHash, latestBlock.Hash.Bytes()) {
+		finalizedHash := m.finalizedBlockHash(latestBlock.Number.Uint64())
+		m.setCurrentState(latestBlock.Hash.Bytes(), finalizedHash.Bytes())
 	}
 
 	tstamp := sCtx.BlockTime()
@@ -147,12 +142,12 @@ func (m *Miner) buildBlock(ctx sdk.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	fcResponse, latestValidHash, err := m.EngineAPI.ForkchoiceUpdated(ctx,
+	fcResponse, _, err := m.EngineAPI.ForkchoiceUpdated(ctx,
 		m.curForkchoiceState, attrs)
 	if err != nil {
 		m.logger.Error("failed to get forkchoice updated", "err", err)
 	}
-	time.Sleep(400 * time.Millisecond) //nolint:gomnd // temp.
+	time.Sleep(200 * time.Millisecond) //nolint:gomnd // temp.
 	// // Build Payload
 	// parent := m.CurrentBlock(ctx)
 	// if envelope, err = m.BuildBlock(ctx, m.constructPayloadArgs(sCtx, parent)); err != nil {
@@ -164,37 +159,9 @@ func (m *Miner) buildBlock(ctx sdk.Context) ([]byte, error) {
 	if err != nil {
 		m.logger.Error("failed to get payload", "err", err)
 	}
-	time.Sleep(400 * time.Millisecond) //nolint:gomnd // temp.
+	time.Sleep(200 * time.Millisecond) //nolint:gomnd // temp.
 
-	// // interfaces.ExecutionData, *pb.BlobsBundle, bool, error
-	// if data. == engine.STATUS_SYNCING {
-	// 	return errors.New("chain rewind prevented invocation of payload creation")
-	// }
-	// Mark the payload as canon
-	if _, err = m.EngineAPI.NewPayload(ctx, data, nil, nil); err != nil {
-		m.logger.Error("failed to new payload", "err", err)
-		return nil, err
-	}
-	time.Sleep(400 * time.Millisecond) //nolint:gomnd // temp.
-	m.setCurrentState(data.BlockHash(), latestValidHash)
-
-	// // m.ConsensusAPI.NewPayload(ctx)
-
-	// bz, err := m.serializer.ToSdkTxBytes(data.En, envelope.ExecutionPayload.GasLimit)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	time.Sleep(400 * time.Millisecond) //nolint:gomnd // temp.
-	attrs2, err := payloadattribute.New(&pb.PayloadAttributesV2{})
-	if err != nil {
-		return nil, err
-	}
-
-	_, _, err = m.EngineAPI.ForkchoiceUpdated(ctx,
-		m.curForkchoiceState, attrs2)
-	if err != nil {
-		m.logger.Error("failed to get forkchoice updated", "err", err)
-	}
+	_ = (&prysm.Builder{Service: m.EngineAPI.(*prysm.Service)}).BlockValidation(ctx, data)
 	return []byte{}, nil
 }
 
