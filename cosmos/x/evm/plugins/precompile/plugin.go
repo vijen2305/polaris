@@ -185,7 +185,7 @@ func (p *plugin) EnableReentrancy(evm vm.PrecompileEVM) {
 	p.enableReentrancy(utils.MustGetAs[vm.PolarStateDB](evm.GetStateDB()))
 }
 
-func (p *plugin) enableReentrancy(sdb vm.PolarStateDB) {
+func (*plugin) enableReentrancy(sdb vm.PolarStateDB) {
 	sdkCtx := sdk.UnwrapSDKContext(sdb.GetContext())
 
 	// end precompile execution => stop emitting Cosmos event as Eth logs for now
