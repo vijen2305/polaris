@@ -22,7 +22,6 @@ package prysm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
@@ -36,18 +35,17 @@ type Builder struct {
 func (b *Builder) BlockProposal(
 	ctx context.Context, payload interfaces.ExecutionData, attrs payloadattribute.Attributer,
 ) (interfaces.ExecutionData, error) {
-	payloadID, latestValidHash, err := b.BlockValidation(ctx, payload)
-	if err != nil {
-		return nil, err
-	}
-	if latestValidHash == nil {
-		return nil, err
-	}
+	// payloadID, latestValidHash, err := b.BlockValidation(ctx, payload)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if latestValidHash == nil {
+	// 	return nil, err
+	// }
 
-	builtPayload, _, _, err := b.GetPayload(ctx, *payloadID, 100000000000)
-	// todo: wait for slot tick or equivalent
+	// builtPayload, _, _, err := b.GetPayload(ctx, *payloadID, primitives.Slot(0))
 
-	return builtPayload, err
+	return nil, nil
 }
 
 // BlockValidation builds a payload from the provided execution data, and submits it to
@@ -58,24 +56,26 @@ func (b *Builder) BlockProposal(
 // receives payload -> get latestValidHash from our execution client -> forkchoice locally.
 func (b *Builder) BlockValidation(
 	ctx context.Context, payload interfaces.ExecutionData,
-) (*enginev1.PayloadIDBytes, []byte, error) {
-	// new Payload
+) ([]byte, error) {
+	// pull the lastest valid hash from the execution node.
+	// this payload should have been p2p'd to this node, calling NewPayload will execute it
+	// adding it to the local canonical chain. the Forkchoice update can then check to see if everything is
+	// gucci gang.
+	// This should probably be ran in prepare proposal in order to reject the proposal if the node receives
+	// a payload that produces a bad block and/or errors.
 	latestValidHash, err := b.NewPayload(ctx, payload, nil, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	// TODO: wait for potential reorg?? on new payload.
-	// time.Sleep(800 * time.Millisecond) //nolint:gomnd // temp.
-	var payloadID *enginev1.PayloadIDBytes
-	payloadID, _, err = b.ForkchoiceUpdated(ctx, &enginev1.ForkchoiceState{
+	_, _, err = b.ForkchoiceUpdated(ctx, &enginev1.ForkchoiceState{
 		HeadBlockHash: latestValidHash,
 		// The two below are technically incorrect? These should be set later imo.
+		// Should we set head block hash in prepare proposal?
+		// Then update safe and finalized in end block / beginning of the following block?
 		SafeBlockHash:      latestValidHash,
 		FinalizedBlockHash: latestValidHash,
 	}, payloadattribute.EmptyWithVersion(3))
 
-	fmt.Println("PAYLOAD ID", payloadID)
-
-	return payloadID, latestValidHash, err
+	return latestValidHash, err
 }
