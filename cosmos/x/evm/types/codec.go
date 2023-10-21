@@ -26,6 +26,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
+const ModuleName = "evm"
+
 // RegisterInterfaces registers the client interfaces to protobuf Any.
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
