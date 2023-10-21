@@ -33,7 +33,7 @@ type Builder struct {
 }
 
 func (b *Builder) BlockProposal(
-	ctx context.Context, payload interfaces.ExecutionData, attrs payloadattribute.Attributer,
+	_ context.Context, _ interfaces.ExecutionData, _ payloadattribute.Attributer,
 ) (interfaces.ExecutionData, error) {
 	// payloadID, latestValidHash, err := b.BlockValidation(ctx, payload)
 	// if err != nil {
@@ -59,10 +59,10 @@ func (b *Builder) BlockValidation(
 ) ([]byte, error) {
 	// pull the lastest valid hash from the execution node.
 	// this payload should have been p2p'd to this node, calling NewPayload will execute it
-	// adding it to the local canonical chain. the Forkchoice update can then check to see if everything is
-	// gucci gang.
-	// This should probably be ran in prepare proposal in order to reject the proposal if the node receives
-	// a payload that produces a bad block and/or errors.
+	// adding it to the local canonical chain. the Forkchoice update can then check to see if
+	// everything is gucci gang.
+	// This should probably be ran in prepare proposal in order to reject the proposal if
+	// the node receives a payload that produces a bad block and/or errors.
 	latestValidHash, err := b.NewPayload(ctx, payload, nil, nil)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (b *Builder) BlockValidation(
 		// Then update safe and finalized in end block / beginning of the following block?
 		SafeBlockHash:      latestValidHash,
 		FinalizedBlockHash: latestValidHash,
-	}, payloadattribute.EmptyWithVersion(3))
+	}, payloadattribute.EmptyWithVersion(3)) //nolint:gomnd // okay for now.
 
 	return latestValidHash, err
 }

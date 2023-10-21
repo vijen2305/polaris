@@ -29,17 +29,8 @@ option go_package = "pkg.berachain.dev/polaris/cosmos/x/evm/types";
 service MsgService {
   option (cosmos.msg.v1.service) = true;
 
-  // EthTransaction defines a method submitting Ethereum transactions.
-  rpc EthTransaction(WrappedEthereumTransaction) returns (WrappedEthereumTransactionResult);
-
   // ProcessPayloadEnvelope defines a method to process CL paylods.
   rpc ProcessPayloadEnvelope(WrappedPayloadEnvelope) returns (WrappedPayloadEnvelopeResponse);
-}
-
-// WrappedEthereumTransaction encapsulates an Ethereum transaction as an SDK message.
-message WrappedEthereumTransaction {
-  // data is inner transaction data of the Ethereum transaction.
-  bytes data = 1;
 }
 
 // WrappedPayloadEnvelope encapsulates an Ethereum transaction as an SDK message.
@@ -60,10 +51,4 @@ enum Status {
   // STATUS_NOT_INCLUDED indicates that the transaction was not included in the
   // `evm` block, due to an critical error.
   STATUS_NOT_INCLUDED = 2;
-}
-
-// WrappedEthereumTransactionResult defines the Msg/EthereumTx response type.
-message WrappedEthereumTransactionResult {
-  // `status` represents a transaction's status
-  Status status = 1;
 }

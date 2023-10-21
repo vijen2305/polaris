@@ -26,30 +26,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/blocks"
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	enginev1 "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
-
-	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 )
-
-// WrapTx sets the transaction data from an `coretypes.Transaction`.
-func WrapTx(tx *coretypes.Transaction) (*WrappedEthereumTransaction, error) {
-	bz, err := tx.MarshalBinary()
-	if err != nil {
-		return nil, fmt.Errorf("failed to wrap transaction: %w", err)
-	}
-
-	return &WrappedEthereumTransaction{
-		Data: bz,
-	}, nil
-}
-
-// Unwrap extracts the transaction as an `coretypes.Transaction`.
-func (etr *WrappedEthereumTransaction) Unwrap() *coretypes.Transaction {
-	tx := new(coretypes.Transaction)
-	if err := tx.UnmarshalBinary(etr.Data); err != nil {
-		return nil
-	}
-	return tx
-}
 
 // WrapPayload sets the payload data from an `engine.ExecutionPayloadEnvelope`.
 func WrapPayload(envelope interfaces.ExecutionData) (*WrappedPayloadEnvelope, error) {
@@ -71,7 +48,10 @@ func (wpe *WrappedPayloadEnvelope) UnwrapPayload() interfaces.ExecutionData {
 		return nil
 	}
 
-	data, err := blocks.WrappedExecutionPayloadCapella(payload.Payload, blocks.PayloadValueToGwei(payload.Value))
+	// todo handle hardforks without needing codechange.
+	data, err := blocks.WrappedExecutionPayloadCapella(
+		payload.Payload, blocks.PayloadValueToGwei(payload.Value),
+	)
 	if err != nil {
 		return nil
 	}

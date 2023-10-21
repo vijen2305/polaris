@@ -30,6 +30,7 @@ import (
 
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 	payloadattribute "github.com/prysmaticlabs/prysm/v4/consensus-types/payload-attribute"
+	"github.com/prysmaticlabs/prysm/v4/consensus-types/primitives"
 	pb "github.com/prysmaticlabs/prysm/v4/proto/engine/v1"
 
 	"cosmossdk.io/log"
@@ -88,7 +89,7 @@ func (m *Miner) PrepareProposal(
 		return nil, err
 	}
 
-	bz, err = m.serializer.ToSdkTxBytes(data, 30000000)
+	bz, err = m.serializer.ToSdkTxBytes(data, 30000000) //nolint:gomnd // todo arbitrary number.
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +130,8 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 	// ALL THIS CODE DOES IS FORCES RESETTING TO THE LATEST EXECUTION BLOCK
 	// CALLS JSON RPC with "latest" block param
 	{
-		latestBlock, err := m.EngineAPI.LatestExecutionBlock(ctx)
+		var latestBlock *pb.ExecutionBlock
+		latestBlock, err = m.EngineAPI.LatestExecutionBlock(ctx)
 		if err != nil {
 			m.logger.Error("failed to get block number", "err", err)
 		}
@@ -144,8 +146,8 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 		if _, err = rand.Read(random[:]); err != nil {
 			return nil, err
 		}
-
-		attrs, err := payloadattribute.New(&pb.PayloadAttributesV2{
+		var attrs payloadattribute.Attributer
+		attrs, err = payloadattribute.New(&pb.PayloadAttributesV2{
 			Timestamp:             uint64(tstamp.Unix()),
 			SuggestedFeeRecipient: m.etherbase.Bytes(),
 			Withdrawals:           nil,
@@ -163,13 +165,14 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 		time.Sleep(100 * time.Millisecond) //nolint:gomnd // temp.
 	}
 
-	builtPayload, _, _, err := builder.GetPayload(ctx, *payloadID, 100000000000)
+	builtPayload, _, _, err := builder.GetPayload(
+		ctx, *payloadID, primitives.Slot(ctx.BlockHeight()),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	var finalizedHash []byte
-	finalizedHash = builtPayload.BlockHash()
+	finalizedHash := builtPayload.BlockHash()
 	// finalizedHash, when there is epochs, could be in the past. But since
 	// we are finalizing every block, the builtPayload and the finalized Hash are the same.
 	m.setCurrentState(builtPayload.BlockHash(), finalizedHash)

@@ -35,9 +35,7 @@ import (
 	antelib "pkg.berachain.dev/polaris/cosmos/lib/ante"
 	libtx "pkg.berachain.dev/polaris/cosmos/lib/tx"
 	"pkg.berachain.dev/polaris/cosmos/runtime/miner"
-	"pkg.berachain.dev/polaris/cosmos/runtime/txpool"
 	evmtypes "pkg.berachain.dev/polaris/cosmos/x/evm/types"
-	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 )
 
 // EVMKeeper is an interface that defines the methods needed for the EVM setup.
@@ -60,8 +58,6 @@ type Polaris struct {
 
 	// WrappedMiner is a wrapped version of the Miner component.
 	WrappedMiner *miner.Miner
-	// WrappedTxPool is a wrapped version of the Mempool component.
-	WrappedTxPool *txpool.Mempool
 	// logger is the underlying logger supplied by the sdk.
 	logger log.Logger
 }
@@ -86,9 +82,12 @@ func New(
 	p.ExecutionClient, err = eth.NewRemoteExecutionClient(
 		cfg.ExecutionClient.RPCDialURL, cfg.ExecutionClient.JWTSecretPath, logger,
 	)
+
 	if err != nil {
 		return nil, err
 	}
+
+	p.WrappedMiner = miner.New(p.ExecutionClient.EngineAPI, p.logger)
 
 	return p, nil
 }
@@ -107,10 +106,7 @@ func MustNew(appOpts servertypes.AppOptions, logger log.Logger) *Polaris {
 // It takes a BaseApp and an EVMKeeper as arguments.
 // It returns an error if the setup fails.
 func (p *Polaris) Build(app CosmosApp) error {
-	p.WrappedTxPool = txpool.New(p.TxPoolAPI)
-	app.SetMempool(p.WrappedTxPool)
-
-	p.WrappedMiner = miner.New(p.ExecutionClient.EngineAPI, p.logger)
+	app.SetMempool(mempool.NoOpMempool{})
 	app.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
 
 	// Set the ante handler to nil, since it is not needed.
@@ -126,8 +122,5 @@ func (p *Polaris) SetupServices(clientCtx client.Context) error {
 	p.WrappedMiner.Init(libtx.NewSerializer[interfaces.ExecutionData](
 		clientCtx.TxConfig, evmtypes.WrapPayload))
 
-	// Initialize the txpool with a new transaction serializer.
-	p.WrappedTxPool.Init(p.logger, clientCtx, libtx.NewSerializer[*coretypes.Transaction](
-		clientCtx.TxConfig, evmtypes.WrapTx))
 	return nil
 }

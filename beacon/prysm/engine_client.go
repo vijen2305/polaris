@@ -135,6 +135,8 @@ func (s *Service) NewPayload(ctx context.Context, payload interfaces.ExecutionDa
 		return result.LatestValidHash, execution.ErrInvalidPayloadStatus
 	case pb.PayloadStatus_VALID:
 		return result.LatestValidHash, nil
+	case pb.PayloadStatus_UNKNOWN:
+		return nil, execution.ErrUnknownPayloadStatus
 	default:
 		return nil, execution.ErrUnknownPayloadStatus
 	}
@@ -206,6 +208,8 @@ func (s *Service) ForkchoiceUpdated(
 		return nil, nil, execution.ErrAcceptedSyncingPayloadStatus
 	case pb.PayloadStatus_INVALID:
 		return nil, resp.LatestValidHash, execution.ErrInvalidPayloadStatus
+	case pb.PayloadStatus_ACCEPTED: // handle something with how this accepted means reorg?
+		return result.PayloadId, resp.LatestValidHash, nil
 	case pb.PayloadStatus_VALID:
 		return result.PayloadId, resp.LatestValidHash, nil
 	case pb.PayloadStatus_INVALID_BLOCK_HASH:
@@ -228,6 +232,7 @@ func (s *Service) GetPayload(ctx context.Context, payloadID [8]byte, slot primit
 	// 	getPayloadLatency.Observe(float64(time.Since(start).Milliseconds()))
 	// }()
 
+	_ = slot
 	d := time.Now().Add(defaultEngineTimeout)
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()

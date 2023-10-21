@@ -31,31 +31,14 @@ import (
 func (k *Keeper) ProcessPayloadEnvelope(
 	ctx context.Context, msg *evmtypes.WrappedPayloadEnvelope,
 ) (*evmtypes.WrappedPayloadEnvelopeResponse, error) {
-	// var (
-	// 	// payloadStatus engine.PayloadStatusV1
-	// 	envelope engine.ExecutionPayloadEnvelope
-	// 	err      error
-	// )
-
-	// if err = envelope.UnmarshalJSON(msg.Data); err != nil {
-	// 	return nil, fmt.Errorf("failed to unmarshal payload envelope: %w", err)
-	// }
-
 	builder := (&prysm.Builder{EngineCaller: k.executionClient})
-	payloadID, _, err := builder.BlockValidation(ctx, msg.UnwrapPayload())
+
+	// TODO: switch evmtypes.WrappedPayloadEnvelope to just use the proto type
+	// from prysm.
+	_, err := builder.BlockValidation(ctx, msg.UnwrapPayload())
 	if err != nil {
-		fmt.Println("PANICCCCCCCCC", err)
+		return nil, fmt.Errorf("failed to validate payload: %w", err)
 	}
 
-	k.Logger(ctx).Info("Processed Payload ID", "payloadID", payloadID, "TODO: FIGURE OUT WHY NIL")
-
 	return &evmtypes.WrappedPayloadEnvelopeResponse{}, nil
-}
-
-// EthTransaction implements the MsgServer interface. It is intentionally a no-op, but is required
-// for the cosmos-sdk to not freak out.
-func (k *Keeper) EthTransaction(
-	context.Context, *evmtypes.WrappedEthereumTransaction,
-) (*evmtypes.WrappedEthereumTransactionResult, error) {
-	panic("intentionally not implemented")
 }

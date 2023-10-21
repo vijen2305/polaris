@@ -128,7 +128,6 @@ func NewPolarisApp(
 		appConfig = depinject.Configs(
 			MakeAppConfig(bech32Prefix),
 			depinject.Provide(
-				signinglib.ProvideNoopGetSigners[*evmv1alpha1.WrappedEthereumTransaction],
 				signinglib.ProvideNoopGetSigners[*evmv1alpha1.WrappedPayloadEnvelope],
 			),
 			depinject.Supply(

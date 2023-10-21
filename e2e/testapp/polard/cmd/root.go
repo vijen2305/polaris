@@ -90,7 +90,6 @@ func NewRootCmd() *cobra.Command {
 				&prysm.Service{},
 			),
 			depinject.Provide(
-				signinglib.ProvideNoopGetSigners[*evmv1alpha1.WrappedEthereumTransaction],
 				signinglib.ProvideNoopGetSigners[*evmv1alpha1.WrappedPayloadEnvelope]),
 		),
 		&interfaceRegistry,

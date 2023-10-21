@@ -188,7 +188,7 @@ func (_BankModule *BankModuleTransactorRaw) Transact(opts *bind.TransactOpts, me
 
 // GetAllBalances is a free data retrieval call binding the contract method 0xc53d6ce1.
 //
-// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleCaller) GetAllBalances(opts *bind.CallOpts, accountAddress common.Address) ([]CosmosCoin, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getAllBalances", accountAddress)
@@ -200,25 +200,26 @@ func (_BankModule *BankModuleCaller) GetAllBalances(opts *bind.CallOpts, account
 	out0 := *abi.ConvertType(out[0], new([]CosmosCoin)).(*[]CosmosCoin)
 
 	return out0, err
+
 }
 
 // GetAllBalances is a free data retrieval call binding the contract method 0xc53d6ce1.
 //
-// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleSession) GetAllBalances(accountAddress common.Address) ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllBalances(&_BankModule.CallOpts, accountAddress)
 }
 
 // GetAllBalances is a free data retrieval call binding the contract method 0xc53d6ce1.
 //
-// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleCallerSession) GetAllBalances(accountAddress common.Address) ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllBalances(&_BankModule.CallOpts, accountAddress)
 }
 
 // GetAllSpendableBalances is a free data retrieval call binding the contract method 0x5c70e594.
 //
-// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleCaller) GetAllSpendableBalances(opts *bind.CallOpts, accountAddress common.Address) ([]CosmosCoin, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getAllSpendableBalances", accountAddress)
@@ -230,25 +231,26 @@ func (_BankModule *BankModuleCaller) GetAllSpendableBalances(opts *bind.CallOpts
 	out0 := *abi.ConvertType(out[0], new([]CosmosCoin)).(*[]CosmosCoin)
 
 	return out0, err
+
 }
 
 // GetAllSpendableBalances is a free data retrieval call binding the contract method 0x5c70e594.
 //
-// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleSession) GetAllSpendableBalances(accountAddress common.Address) ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllSpendableBalances(&_BankModule.CallOpts, accountAddress)
 }
 
 // GetAllSpendableBalances is a free data retrieval call binding the contract method 0x5c70e594.
 //
-// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[]).
+// Solidity: function getAllSpendableBalances(address accountAddress) view returns((uint256,string)[])
 func (_BankModule *BankModuleCallerSession) GetAllSpendableBalances(accountAddress common.Address) ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllSpendableBalances(&_BankModule.CallOpts, accountAddress)
 }
 
 // GetAllSupply is a free data retrieval call binding the contract method 0xf01c9474.
 //
-// Solidity: function getAllSupply() view returns((uint256,string)[]).
+// Solidity: function getAllSupply() view returns((uint256,string)[])
 func (_BankModule *BankModuleCaller) GetAllSupply(opts *bind.CallOpts) ([]CosmosCoin, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getAllSupply")
@@ -260,25 +262,26 @@ func (_BankModule *BankModuleCaller) GetAllSupply(opts *bind.CallOpts) ([]Cosmos
 	out0 := *abi.ConvertType(out[0], new([]CosmosCoin)).(*[]CosmosCoin)
 
 	return out0, err
+
 }
 
 // GetAllSupply is a free data retrieval call binding the contract method 0xf01c9474.
 //
-// Solidity: function getAllSupply() view returns((uint256,string)[]).
+// Solidity: function getAllSupply() view returns((uint256,string)[])
 func (_BankModule *BankModuleSession) GetAllSupply() ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllSupply(&_BankModule.CallOpts)
 }
 
 // GetAllSupply is a free data retrieval call binding the contract method 0xf01c9474.
 //
-// Solidity: function getAllSupply() view returns((uint256,string)[]).
+// Solidity: function getAllSupply() view returns((uint256,string)[])
 func (_BankModule *BankModuleCallerSession) GetAllSupply() ([]CosmosCoin, error) {
 	return _BankModule.Contract.GetAllSupply(&_BankModule.CallOpts)
 }
 
 // GetBalance is a free data retrieval call binding the contract method 0x1dd7cecf.
 //
-// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleCaller) GetBalance(opts *bind.CallOpts, accountAddress common.Address, denom string) (*big.Int, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getBalance", accountAddress, denom)
@@ -290,25 +293,26 @@ func (_BankModule *BankModuleCaller) GetBalance(opts *bind.CallOpts, accountAddr
 	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
+
 }
 
 // GetBalance is a free data retrieval call binding the contract method 0x1dd7cecf.
 //
-// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleSession) GetBalance(accountAddress common.Address, denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetBalance(&_BankModule.CallOpts, accountAddress, denom)
 }
 
 // GetBalance is a free data retrieval call binding the contract method 0x1dd7cecf.
 //
-// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleCallerSession) GetBalance(accountAddress common.Address, denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetBalance(&_BankModule.CallOpts, accountAddress, denom)
 }
 
 // GetSpendableBalance is a free data retrieval call binding the contract method 0x34d1fdaf.
 //
-// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleCaller) GetSpendableBalance(opts *bind.CallOpts, accountAddress common.Address, denom string) (*big.Int, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getSpendableBalance", accountAddress, denom)
@@ -320,25 +324,26 @@ func (_BankModule *BankModuleCaller) GetSpendableBalance(opts *bind.CallOpts, ac
 	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
+
 }
 
 // GetSpendableBalance is a free data retrieval call binding the contract method 0x34d1fdaf.
 //
-// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleSession) GetSpendableBalance(accountAddress common.Address, denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetSpendableBalance(&_BankModule.CallOpts, accountAddress, denom)
 }
 
 // GetSpendableBalance is a free data retrieval call binding the contract method 0x34d1fdaf.
 //
-// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256).
+// Solidity: function getSpendableBalance(address accountAddress, string denom) view returns(uint256)
 func (_BankModule *BankModuleCallerSession) GetSpendableBalance(accountAddress common.Address, denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetSpendableBalance(&_BankModule.CallOpts, accountAddress, denom)
 }
 
 // GetSupply is a free data retrieval call binding the contract method 0xfe3b2b88.
 //
-// Solidity: function getSupply(string denom) view returns(uint256).
+// Solidity: function getSupply(string denom) view returns(uint256)
 func (_BankModule *BankModuleCaller) GetSupply(opts *bind.CallOpts, denom string) (*big.Int, error) {
 	var out []interface{}
 	err := _BankModule.contract.Call(opts, &out, "getSupply", denom)
@@ -350,39 +355,40 @@ func (_BankModule *BankModuleCaller) GetSupply(opts *bind.CallOpts, denom string
 	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
+
 }
 
 // GetSupply is a free data retrieval call binding the contract method 0xfe3b2b88.
 //
-// Solidity: function getSupply(string denom) view returns(uint256).
+// Solidity: function getSupply(string denom) view returns(uint256)
 func (_BankModule *BankModuleSession) GetSupply(denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetSupply(&_BankModule.CallOpts, denom)
 }
 
 // GetSupply is a free data retrieval call binding the contract method 0xfe3b2b88.
 //
-// Solidity: function getSupply(string denom) view returns(uint256).
+// Solidity: function getSupply(string denom) view returns(uint256)
 func (_BankModule *BankModuleCallerSession) GetSupply(denom string) (*big.Int, error) {
 	return _BankModule.Contract.GetSupply(&_BankModule.CallOpts, denom)
 }
 
 // Send is a paid mutator transaction binding the contract method 0x7e075f07.
 //
-// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool).
+// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool)
 func (_BankModule *BankModuleTransactor) Send(opts *bind.TransactOpts, toAddress common.Address, amount []CosmosCoin) (*types.Transaction, error) {
 	return _BankModule.contract.Transact(opts, "send", toAddress, amount)
 }
 
 // Send is a paid mutator transaction binding the contract method 0x7e075f07.
 //
-// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool).
+// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool)
 func (_BankModule *BankModuleSession) Send(toAddress common.Address, amount []CosmosCoin) (*types.Transaction, error) {
 	return _BankModule.Contract.Send(&_BankModule.TransactOpts, toAddress, amount)
 }
 
 // Send is a paid mutator transaction binding the contract method 0x7e075f07.
 //
-// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool).
+// Solidity: function send(address toAddress, (uint256,string)[] amount) payable returns(bool)
 func (_BankModule *BankModuleTransactorSession) Send(toAddress common.Address, amount []CosmosCoin) (*types.Transaction, error) {
 	return _BankModule.Contract.Send(&_BankModule.TransactOpts, toAddress, amount)
 }
@@ -463,8 +469,9 @@ type BankModuleBurn struct {
 
 // FilterBurn is a free log retrieval operation binding the contract event 0x9fa0c2fb43a81906efbb089cd76002325d71b437612a2a987c707446629d6ab0.
 //
-// Solidity: event Burn(address indexed burner, (uint256,string)[] amount).
+// Solidity: event Burn(address indexed burner, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) FilterBurn(opts *bind.FilterOpts, burner []common.Address) (*BankModuleBurnIterator, error) {
+
 	var burnerRule []interface{}
 	for _, burnerItem := range burner {
 		burnerRule = append(burnerRule, burnerItem)
@@ -479,8 +486,9 @@ func (_BankModule *BankModuleFilterer) FilterBurn(opts *bind.FilterOpts, burner 
 
 // WatchBurn is a free log subscription operation binding the contract event 0x9fa0c2fb43a81906efbb089cd76002325d71b437612a2a987c707446629d6ab0.
 //
-// Solidity: event Burn(address indexed burner, (uint256,string)[] amount).
+// Solidity: event Burn(address indexed burner, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) WatchBurn(opts *bind.WatchOpts, sink chan<- *BankModuleBurn, burner []common.Address) (event.Subscription, error) {
+
 	var burnerRule []interface{}
 	for _, burnerItem := range burner {
 		burnerRule = append(burnerRule, burnerItem)
@@ -520,7 +528,7 @@ func (_BankModule *BankModuleFilterer) WatchBurn(opts *bind.WatchOpts, sink chan
 
 // ParseBurn is a log parse operation binding the contract event 0x9fa0c2fb43a81906efbb089cd76002325d71b437612a2a987c707446629d6ab0.
 //
-// Solidity: event Burn(address indexed burner, (uint256,string)[] amount).
+// Solidity: event Burn(address indexed burner, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) ParseBurn(log types.Log) (*BankModuleBurn, error) {
 	event := new(BankModuleBurn)
 	if err := _BankModule.contract.UnpackLog(event, "Burn", log); err != nil {
@@ -606,8 +614,9 @@ type BankModuleCoinReceived struct {
 
 // FilterCoinReceived is a free log retrieval operation binding the contract event 0x13f9c352919df1623a08e6d6d9eac5f774573896f09916d8fbc5d083095fc3b4.
 //
-// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount).
+// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) FilterCoinReceived(opts *bind.FilterOpts, receiver []common.Address) (*BankModuleCoinReceivedIterator, error) {
+
 	var receiverRule []interface{}
 	for _, receiverItem := range receiver {
 		receiverRule = append(receiverRule, receiverItem)
@@ -622,8 +631,9 @@ func (_BankModule *BankModuleFilterer) FilterCoinReceived(opts *bind.FilterOpts,
 
 // WatchCoinReceived is a free log subscription operation binding the contract event 0x13f9c352919df1623a08e6d6d9eac5f774573896f09916d8fbc5d083095fc3b4.
 //
-// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount).
+// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) WatchCoinReceived(opts *bind.WatchOpts, sink chan<- *BankModuleCoinReceived, receiver []common.Address) (event.Subscription, error) {
+
 	var receiverRule []interface{}
 	for _, receiverItem := range receiver {
 		receiverRule = append(receiverRule, receiverItem)
@@ -663,7 +673,7 @@ func (_BankModule *BankModuleFilterer) WatchCoinReceived(opts *bind.WatchOpts, s
 
 // ParseCoinReceived is a log parse operation binding the contract event 0x13f9c352919df1623a08e6d6d9eac5f774573896f09916d8fbc5d083095fc3b4.
 //
-// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount).
+// Solidity: event CoinReceived(address indexed receiver, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) ParseCoinReceived(log types.Log) (*BankModuleCoinReceived, error) {
 	event := new(BankModuleCoinReceived)
 	if err := _BankModule.contract.UnpackLog(event, "CoinReceived", log); err != nil {
@@ -749,8 +759,9 @@ type BankModuleCoinSpent struct {
 
 // FilterCoinSpent is a free log retrieval operation binding the contract event 0x8b8b22fea5b121b174e6cfea34ddaf187b66b43dab67679fa291a0fae2427a99.
 //
-// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount).
+// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) FilterCoinSpent(opts *bind.FilterOpts, spender []common.Address) (*BankModuleCoinSpentIterator, error) {
+
 	var spenderRule []interface{}
 	for _, spenderItem := range spender {
 		spenderRule = append(spenderRule, spenderItem)
@@ -765,8 +776,9 @@ func (_BankModule *BankModuleFilterer) FilterCoinSpent(opts *bind.FilterOpts, sp
 
 // WatchCoinSpent is a free log subscription operation binding the contract event 0x8b8b22fea5b121b174e6cfea34ddaf187b66b43dab67679fa291a0fae2427a99.
 //
-// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount).
+// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) WatchCoinSpent(opts *bind.WatchOpts, sink chan<- *BankModuleCoinSpent, spender []common.Address) (event.Subscription, error) {
+
 	var spenderRule []interface{}
 	for _, spenderItem := range spender {
 		spenderRule = append(spenderRule, spenderItem)
@@ -806,7 +818,7 @@ func (_BankModule *BankModuleFilterer) WatchCoinSpent(opts *bind.WatchOpts, sink
 
 // ParseCoinSpent is a log parse operation binding the contract event 0x8b8b22fea5b121b174e6cfea34ddaf187b66b43dab67679fa291a0fae2427a99.
 //
-// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount).
+// Solidity: event CoinSpent(address indexed spender, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) ParseCoinSpent(log types.Log) (*BankModuleCoinSpent, error) {
 	event := new(BankModuleCoinSpent)
 	if err := _BankModule.contract.UnpackLog(event, "CoinSpent", log); err != nil {
@@ -892,8 +904,9 @@ type BankModuleCoinbase struct {
 
 // FilterCoinbase is a free log retrieval operation binding the contract event 0xefb3f1f2a9af64b5fcc2da3c5a088d780585c674b8075fe2a1ba6b0d906cbe9f.
 //
-// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount).
+// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) FilterCoinbase(opts *bind.FilterOpts, minter []common.Address) (*BankModuleCoinbaseIterator, error) {
+
 	var minterRule []interface{}
 	for _, minterItem := range minter {
 		minterRule = append(minterRule, minterItem)
@@ -908,8 +921,9 @@ func (_BankModule *BankModuleFilterer) FilterCoinbase(opts *bind.FilterOpts, min
 
 // WatchCoinbase is a free log subscription operation binding the contract event 0xefb3f1f2a9af64b5fcc2da3c5a088d780585c674b8075fe2a1ba6b0d906cbe9f.
 //
-// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount).
+// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) WatchCoinbase(opts *bind.WatchOpts, sink chan<- *BankModuleCoinbase, minter []common.Address) (event.Subscription, error) {
+
 	var minterRule []interface{}
 	for _, minterItem := range minter {
 		minterRule = append(minterRule, minterItem)
@@ -949,7 +963,7 @@ func (_BankModule *BankModuleFilterer) WatchCoinbase(opts *bind.WatchOpts, sink 
 
 // ParseCoinbase is a log parse operation binding the contract event 0xefb3f1f2a9af64b5fcc2da3c5a088d780585c674b8075fe2a1ba6b0d906cbe9f.
 //
-// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount).
+// Solidity: event Coinbase(address indexed minter, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) ParseCoinbase(log types.Log) (*BankModuleCoinbase, error) {
 	event := new(BankModuleCoinbase)
 	if err := _BankModule.contract.UnpackLog(event, "Coinbase", log); err != nil {
@@ -1034,8 +1048,9 @@ type BankModuleMessage struct {
 
 // FilterMessage is a free log retrieval operation binding the contract event 0x516772d06520d23d2705f0b46a1fa6deec0ae36a2c00db049bd5f4094a123b85.
 //
-// Solidity: event Message(address indexed sender).
+// Solidity: event Message(address indexed sender)
 func (_BankModule *BankModuleFilterer) FilterMessage(opts *bind.FilterOpts, sender []common.Address) (*BankModuleMessageIterator, error) {
+
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
@@ -1050,8 +1065,9 @@ func (_BankModule *BankModuleFilterer) FilterMessage(opts *bind.FilterOpts, send
 
 // WatchMessage is a free log subscription operation binding the contract event 0x516772d06520d23d2705f0b46a1fa6deec0ae36a2c00db049bd5f4094a123b85.
 //
-// Solidity: event Message(address indexed sender).
+// Solidity: event Message(address indexed sender)
 func (_BankModule *BankModuleFilterer) WatchMessage(opts *bind.WatchOpts, sink chan<- *BankModuleMessage, sender []common.Address) (event.Subscription, error) {
+
 	var senderRule []interface{}
 	for _, senderItem := range sender {
 		senderRule = append(senderRule, senderItem)
@@ -1091,7 +1107,7 @@ func (_BankModule *BankModuleFilterer) WatchMessage(opts *bind.WatchOpts, sink c
 
 // ParseMessage is a log parse operation binding the contract event 0x516772d06520d23d2705f0b46a1fa6deec0ae36a2c00db049bd5f4094a123b85.
 //
-// Solidity: event Message(address indexed sender).
+// Solidity: event Message(address indexed sender)
 func (_BankModule *BankModuleFilterer) ParseMessage(log types.Log) (*BankModuleMessage, error) {
 	event := new(BankModuleMessage)
 	if err := _BankModule.contract.UnpackLog(event, "Message", log); err != nil {
@@ -1177,8 +1193,9 @@ type BankModuleTransfer struct {
 
 // FilterTransfer is a free log retrieval operation binding the contract event 0x65ff5b103f0567c3e1783dc0b40e725544567fb6f584d9b084abea2e26d20328.
 //
-// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount).
+// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) FilterTransfer(opts *bind.FilterOpts, recipient []common.Address) (*BankModuleTransferIterator, error) {
+
 	var recipientRule []interface{}
 	for _, recipientItem := range recipient {
 		recipientRule = append(recipientRule, recipientItem)
@@ -1193,8 +1210,9 @@ func (_BankModule *BankModuleFilterer) FilterTransfer(opts *bind.FilterOpts, rec
 
 // WatchTransfer is a free log subscription operation binding the contract event 0x65ff5b103f0567c3e1783dc0b40e725544567fb6f584d9b084abea2e26d20328.
 //
-// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount).
+// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *BankModuleTransfer, recipient []common.Address) (event.Subscription, error) {
+
 	var recipientRule []interface{}
 	for _, recipientItem := range recipient {
 		recipientRule = append(recipientRule, recipientItem)
@@ -1234,7 +1252,7 @@ func (_BankModule *BankModuleFilterer) WatchTransfer(opts *bind.WatchOpts, sink 
 
 // ParseTransfer is a log parse operation binding the contract event 0x65ff5b103f0567c3e1783dc0b40e725544567fb6f584d9b084abea2e26d20328.
 //
-// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount).
+// Solidity: event Transfer(address indexed recipient, (uint256,string)[] amount)
 func (_BankModule *BankModuleFilterer) ParseTransfer(log types.Log) (*BankModuleTransfer, error) {
 	event := new(BankModuleTransfer)
 	if err := _BankModule.contract.UnpackLog(event, "Transfer", log); err != nil {
