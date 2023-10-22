@@ -21,16 +21,21 @@
 package runtime
 
 import (
+	"time"
+
 	"github.com/prysmaticlabs/prysm/v4/consensus-types/interfaces"
 
 	"cosmossdk.io/log"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 
 	"pkg.berachain.dev/polaris/beacon/eth"
+	proposal "pkg.berachain.dev/polaris/cosmos/abci/proposal"
+	"pkg.berachain.dev/polaris/cosmos/abci/ve"
 	"pkg.berachain.dev/polaris/cosmos/config"
 	antelib "pkg.berachain.dev/polaris/cosmos/lib/ante"
 	libtx "pkg.berachain.dev/polaris/cosmos/lib/tx"
@@ -49,6 +54,10 @@ type CosmosApp interface {
 	SetPrepareProposal(sdk.PrepareProposalHandler)
 	SetMempool(mempool.Mempool)
 	SetAnteHandler(sdk.AnteHandler)
+	SetExtendVoteHandler(sdk.ExtendVoteHandler)
+	SetProcessProposal(sdk.ProcessProposalHandler)
+	SetVerifyVoteExtensionHandler(sdk.VerifyVoteExtensionHandler)
+	ChainID() string
 }
 
 // Polaris is a struct that wraps the Polaris struct from the polar package.
@@ -105,12 +114,33 @@ func MustNew(appOpts servertypes.AppOptions, logger log.Logger) *Polaris {
 // Build is a function that sets up the Polaris struct.
 // It takes a BaseApp and an EVMKeeper as arguments.
 // It returns an error if the setup fails.
-func (p *Polaris) Build(app CosmosApp) error {
+func (p *Polaris) Build(app CosmosApp, vs baseapp.ValidatorStore) error {
 	app.SetMempool(mempool.NoOpMempool{})
-	app.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
+
+	// Create the proposal handler that will be used to fill proposals with
+	// transactions and oracle data.
+	proposalHandler := proposal.NewProposalHandler(
+		p.logger,
+		baseapp.NoOpPrepareProposal(),
+		baseapp.NoOpProcessProposal(),
+		ve.NewDefaultValidateVoteExtensionsFn(app.ChainID(), vs),
+		p.WrappedMiner,
+	)
+	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
+	app.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 	// Set the ante handler to nil, since it is not needed.
 	app.SetAnteHandler(antelib.NewAnteHandler())
+
+	// Create the vote extensions handler that will be used to extend and verify
+	// vote extensions (i.e. oracle data).
+	voteExtensionsHandler := ve.NewVoteExtensionHandler(
+		p.logger,
+		time.Second,
+		p.WrappedMiner,
+	)
+	app.SetExtendVoteHandler(voteExtensionsHandler.ExtendVoteHandler())
+	app.SetVerifyVoteExtensionHandler(voteExtensionsHandler.VerifyVoteExtensionHandler())
 
 	return nil
 }

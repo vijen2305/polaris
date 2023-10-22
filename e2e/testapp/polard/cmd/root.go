@@ -168,11 +168,10 @@ func NewRootCmd() *cobra.Command {
 func initCometBFTConfig() *cmtcfg.Config {
 	cfg := cmtcfg.DefaultConfig()
 	consensus := cfg.Consensus
-	consensus.TimeoutCommit = time.Second * 2
-	consensus.TimeoutPropose = time.Second * 2
-	consensus.TimeoutPrevote = time.Second * 2
-	consensus.TimeoutPrecommit = time.Second * 2
-	consensus.TimeoutCommit = time.Second * 2
+	consensus.TimeoutPropose = time.Second * 5
+	consensus.TimeoutPrevote = time.Second * 5
+	consensus.TimeoutPrecommit = time.Second * 1
+	consensus.TimeoutCommit = time.Second * 1
 
 	// Disable the indexer
 	cfg.TxIndex.Indexer = "null"

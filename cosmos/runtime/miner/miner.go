@@ -82,19 +82,29 @@ func (m *Miner) Init(serializer EnvelopeSerializer) {
 func (m *Miner) PrepareProposal(
 	ctx sdk.Context, _ *abci.RequestPrepareProposal,
 ) (*abci.ResponsePrepareProposal, error) {
+	// var data interfaces.ExecutionData
+	// var err error
+	// var bz []byte
+	// if data, err = m.buildBlock(ctx); err != nil {
+	// 	return nil, err
+	// }
+
+	// bz, err = m.serializer.ToSdkTxBytes(data, 30000000) //nolint:gomnd // todo arbitrary number.
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	return &abci.ResponsePrepareProposal{Txs: [][]byte{}}, nil
+}
+
+func (m *Miner) BuildVoteExtension(ctx sdk.Context, _ int64) ([]byte, error) {
 	var data interfaces.ExecutionData
 	var err error
-	var bz []byte
 	if data, err = m.buildBlock(ctx); err != nil {
 		return nil, err
 	}
 
-	bz, err = m.serializer.ToSdkTxBytes(data, 30000000) //nolint:gomnd // todo arbitrary number.
-	if err != nil {
-		return nil, err
-	}
-
-	return &abci.ResponsePrepareProposal{Txs: [][]byte{bz}}, err
+	return data.MarshalSSZ()
 }
 
 // finalizedBlockHash returns the block hash of the finalized block corresponding to the given
@@ -122,7 +132,7 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 	var (
 		err error
 		// envelope *engine.ExecutionPayloadEnvelope
-		sCtx = sdk.UnwrapSDKContext(ctx)
+		// sCtx = sdk.UnwrapSDKContext(ctx)
 	)
 
 	var payloadID *pb.PayloadIDBytes
@@ -141,14 +151,14 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 			m.setCurrentState(latestBlock.Hash.Bytes(), finalizedHash.Bytes())
 		}
 
-		tstamp := sCtx.BlockTime()
+		// tstamp := sCtx.BlockTime()
 		var random [32]byte
 		if _, err = rand.Read(random[:]); err != nil {
 			return nil, err
 		}
 		var attrs payloadattribute.Attributer
 		attrs, err = payloadattribute.New(&pb.PayloadAttributesV2{
-			Timestamp:             uint64(tstamp.Unix()),
+			Timestamp:             uint64(time.Now().Unix()),
 			SuggestedFeeRecipient: m.etherbase.Bytes(),
 			Withdrawals:           nil,
 			PrevRandao:            append([]byte{}, random[:]...),
@@ -162,7 +172,8 @@ func (m *Miner) buildBlock(ctx sdk.Context) (interfaces.ExecutionData, error) {
 		if err != nil {
 			m.logger.Error("failed to get forkchoice updated", "err", err)
 		}
-		time.Sleep(100 * time.Millisecond) //nolint:gomnd // temp.
+		// TODO: this should be something that is 80% of proposal timeout, or so?
+		time.Sleep(2500 * time.Millisecond) //nolint:gomnd // temp.
 	}
 
 	builtPayload, _, _, err := builder.GetPayload(
