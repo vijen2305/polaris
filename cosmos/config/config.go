@@ -27,7 +27,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"pkg.berachain.dev/polaris/cosmos/config/flags"
-	"pkg.berachain.dev/polaris/eth/accounts"
 )
 
 // Config is the main configuration struct for the Polaris chain.
@@ -56,7 +55,7 @@ func SetupCosmosConfig() {
 
 	// We use CoinType == 60 to match Ethereum.
 	// This is not strictly necessary, though highly recommended.
-	config.SetCoinType(accounts.Bip44CoinType)
+	config.SetCoinType(60)
 	config.SetPurpose(sdk.Purpose)
 	config.Seal()
 }
