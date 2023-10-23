@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"sync"
 	"sync/atomic"
 
 	lru "github.com/ethereum/go-ethereum/common/lru"
@@ -48,7 +49,10 @@ var _ Blockchain = (*blockchain)(nil)
 
 // Blockchain interface defines the methods that a blockchain must have.
 type Blockchain interface {
+	ResetSDB(ctx context.Context)
 	PreparePlugins(ctx context.Context)
+	SetSDBQueryState(ctx context.Context)
+	InsertBlockWithoutSetHeadCtx(ctx context.Context, block *types.Block) error
 	ChainReader
 	ChainWriter
 	ChainSubscriber
@@ -64,6 +68,7 @@ type blockchain struct {
 	pp PrecompilePlugin
 	sp StatePlugin
 
+	mu        sync.Mutex
 	engine    consensus.Engine
 	processor core.Processor
 
@@ -150,8 +155,21 @@ func (bc *blockchain) LoadLastState(ctx context.Context, number uint64) error {
 	return bc.loadLastState(number)
 }
 
-func (bc *blockchain) PreparePlugins(ctx context.Context) {
+func (bc *blockchain) ResetSDB(ctx context.Context) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
 	bc.sp.Reset(ctx)
+}
+
+func (bc *blockchain) SetSDBQueryState(ctx context.Context) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	bc.sp.Prepare(ctx)
+}
+
+func (bc *blockchain) PreparePlugins(ctx context.Context) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
 	bc.bp.Prepare(ctx)
 	if bc.hp != nil {
 		bc.hp.Prepare(ctx)

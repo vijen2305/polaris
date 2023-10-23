@@ -26,6 +26,7 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
@@ -55,8 +56,13 @@ type EVMKeeper interface {
 // CosmosApp is an interface that defines the methods needed for the Cosmos setup.
 type CosmosApp interface {
 	SetPrepareProposal(sdk.PrepareProposalHandler)
+	SetProcessProposal(sdk.ProcessProposalHandler)
 	SetMempool(mempool.Mempool)
 	SetAnteHandler(sdk.AnteHandler)
+	PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error)
+	ProcessProposalVerifyTx(txBz []byte) (sdk.Tx, error)
+	TxDecode(txBz []byte) (sdk.Tx, error)
+	TxEncode(tx sdk.Tx) ([]byte, error)
 }
 
 // Polaris is a struct that wraps the Polaris struct from the polar package.
@@ -99,9 +105,11 @@ func New(
 func (p *Polaris) Build(app CosmosApp, ek EVMKeeper) error {
 	p.WrappedTxPool = txpool.New(p.TxPool())
 	app.SetMempool(p.WrappedTxPool)
+	dpp := baseapp.NewDefaultProposalHandler(p.WrappedTxPool, app)
+	p.WrappedMiner = miner.New(p.Miner(), dpp.ProcessProposalHandler(), p.Blockchain())
 
-	p.WrappedMiner = miner.New(p.Miner())
 	app.SetPrepareProposal(p.WrappedMiner.PrepareProposal)
+	app.SetProcessProposal(p.WrappedMiner.ProcessProposal)
 
 	if err := ek.Setup(p.Blockchain()); err != nil {
 		return err

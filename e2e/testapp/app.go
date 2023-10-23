@@ -185,6 +185,7 @@ func NewPolarisApp(
 
 	// Build the app using the app builder.
 	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
+	app.EVMKeeper.SetRootMultiStore(app.CommitMultiStore())
 	app.Polaris = polarruntime.New(
 		evmconfig.MustReadConfigFromAppOpts(appOpts), app.Logger(), app.EVMKeeper.Host, nil,
 	)
@@ -234,7 +235,7 @@ func (app *SimApp) LegacyAmino() *codec.LegacyAmino {
 func (app *SimApp) kvStoreKeys() map[string]*storetypes.KVStoreKey {
 	keys := make(map[string]*storetypes.KVStoreKey)
 	for _, k := range app.GetStoreKeys() {
-		if kv, ok := k.(*storetypes.KVStoreKey); ok {
+		if kv, ok := k.(*storetypes.KVStoreKey); ok {        
 			keys[kv.Name()] = kv
 		}
 	}

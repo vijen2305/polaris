@@ -46,6 +46,9 @@ func (bc *blockchain) StateAt(common.Hash) (state.StateDB, error) {
 // StateAtBlockNumber returns a statedb configured to read what the state of the blockchain is/was
 // at a given block number.
 func (bc *blockchain) StateAtBlockNumber(number uint64) (state.StateDB, error) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
 	sp, err := bc.sp.StateAtBlockNumber(number)
 	if err != nil {
 		return nil, err

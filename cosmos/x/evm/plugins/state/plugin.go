@@ -23,6 +23,7 @@ package state
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 
@@ -63,6 +64,7 @@ type Plugin interface {
 	SetGasConfig(storetypes.GasConfig, storetypes.GasConfig)
 	// SetPrecompileLogFactory sets the precompile log factory for the plugin.
 	SetPrecompileLogFactory(events.PrecompileLogFactory)
+	SetRootMultiStore(storetypes.MultiStore)
 }
 
 // The StatePlugin is a very fun and interesting part of the EVM implementation. But if you want to
@@ -114,7 +116,9 @@ type plugin struct {
 
 	mu sync.Mutex
 
-	latestState sdk.Context
+	queryState sdk.Context
+
+	rootMultiStore storetypes.MultiStore
 }
 
 // NewPlugin returns a plugin with the given context and keepers.
@@ -133,6 +137,10 @@ func NewPlugin(
 	}
 }
 
+func (p *plugin) SetRootMultiStore(ms storetypes.MultiStore) {
+	p.rootMultiStore = ms
+}
+
 // SetupForPrecompiles sets the precompile plugin and the log factory on the state plugin.
 func (p *plugin) SetPrecompileLogFactory(plf events.PrecompileLogFactory) {
 	p.plf = plf
@@ -141,7 +149,10 @@ func (p *plugin) SetPrecompileLogFactory(plf events.PrecompileLogFactory) {
 // Prepare sets up the context on the state plugin for use in JSON-RPC calls.
 // Prepare implements `core.StatePlugin`.
 func (p *plugin) Prepare(ctx context.Context) {
-	p.latestState = sdk.UnwrapSDKContext(ctx)
+	p.queryState = sdk.UnwrapSDKContext(ctx).WithMultiStore(
+		NoWrite{MultiStore: sdk.UnwrapSDKContext(ctx).MultiStore().CacheMultiStore()},
+	).WithGasMeter(storetypes.NewInfiniteGasMeter()).WithBlockGasMeter(storetypes.NewInfiniteGasMeter()).
+		WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
 }
 
 // Reset sets up the state plugin for execution of a new transaction. It sets up the snapshottable
@@ -195,10 +206,6 @@ func (p *plugin) Error() error {
 	return p.dbErr
 }
 
-func (p *plugin) Finalize() {
-	p.Controller.Finalize()
-}
-
 // ===========================================================================
 // Accounts
 // ===========================================================================
@@ -206,9 +213,20 @@ func (p *plugin) Finalize() {
 // CreateAccount implements the `StatePlugin` interface by creating a new account
 // in the account keeper. It will allow accounts to be overridden.
 func (p *plugin) CreateAccount(addr common.Address) {
-	if p.ak.GetAccount(p.ctx, addr[:]) == nil {
-		p.ak.SetAccount(p.ctx, p.ak.NewAccountWithAddress(p.ctx, addr[:]))
+	defer func() {
+		if r := recover(); r != nil {
+			p.dbErr = fmt.Errorf("panic occurred: %v", r)
+		}
+	}()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.ak.HasAccount(p.ctx, addr[:]) {
+		return
 	}
+
+	acc := p.ak.NewAccountWithAddress(p.ctx, addr[:])
+	acc.SetSequence(0)
+	p.ak.SetAccount(p.ctx, acc)
 
 	// initialize the code hash to empty
 	p.cms.GetKVStore(p.storeKey).Set(CodeHashKeyFor(addr), emptyCodeHashBytes)
@@ -310,6 +328,11 @@ func (p *plugin) GetNonce(addr common.Address) uint64 {
 func (p *plugin) SetNonce(addr common.Address, nonce uint64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	defer func() {
+		if r := recover(); r != nil {
+			p.dbErr = fmt.Errorf("panic occurred: %v", r)
+		}
+	}()
 	// get the account or create a new one if doesn't exist
 	acc := p.ak.GetAccount(p.ctx, addr[:])
 	if acc == nil {
@@ -518,6 +541,14 @@ func (p *plugin) IterateBalances(fn func(common.Address, *big.Int) bool) {
 	}
 }
 
+var _ storetypes.CacheMultiStore = (*NoWrite)(nil)
+
+type NoWrite struct {
+	storetypes.MultiStore
+}
+
+func (c NoWrite) Write() {}
+
 // =============================================================================
 // Historical State
 // =============================================================================
@@ -530,17 +561,24 @@ func (p *plugin) StateAtBlockNumber(number uint64) (core.StatePlugin, error) {
 		return nil, errors.New("no query context function set in host chain")
 	}
 
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	int64Number := int64(number)
 	// TODO: the GTE may be hiding a larger issue with the timing of the NewHead channel stuff.
 	// Investigate and hopefully remove this GTE.
-	if int64Number >= p.latestState.BlockHeight() {
-		// TODO: Manager properly
-		if p.latestState.MultiStore() == nil {
-			ctx = p.latestState.WithEventManager(sdk.NewEventManager())
+	if int64Number >= p.ctx.BlockHeight() {
+		if p.queryState.MultiStore() == nil {
+			ctx = ctx.WithMultiStore(NoWrite{MultiStore: p.rootMultiStore.CacheMultiStore()}).WithEventManager(sdk.NewEventManager()).WithBlockHeight(int64Number)
 		} else {
-			ctx, _ = p.latestState.CacheContext()
+			fmt.Println("USING QUERY STATE")
+			ctx, _ = p.queryState.CacheContext()
 		}
 	} else {
+		// Ensure the query context function is set.w
+		if p.qfn == nil {
+			return nil, errors.New("no query context function set in host chain")
+		}
+
 		// Get the query context at the given height.
 		var err error
 		ctx, err = p.qfn()(int64Number, false)
@@ -549,12 +587,15 @@ func (p *plugin) StateAtBlockNumber(number uint64) (core.StatePlugin, error) {
 		}
 	}
 
+	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
+	ctx = ctx.WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
 	// Create a State Plugin with the requested chain height.
 	sp := NewPlugin(p.ak, p.storeKey, p.qfn, p.plf)
-	// TODO: Manager properly
-	if p.latestState.MultiStore() != nil {
-		sp.Reset(ctx)
-	}
+	sp.Reset(ctx)
+
+	fmt.Println("CALLING STATE AT BN", sdk.UnwrapSDKContext(sp.GetContext()).BlockHeight())
+
 	return sp, nil
 }
 
@@ -565,11 +606,8 @@ func (p *plugin) StateAtBlockNumber(number uint64) (core.StatePlugin, error) {
 // Clone implements libtypes.Cloneable.
 func (p *plugin) Clone() ethstate.Plugin {
 	sp := NewPlugin(p.ak, p.storeKey, p.qfn, p.plf)
-	// TODO: Manager properly
-	if p.ctx.MultiStore() != nil {
-		cacheCtx, _ := p.ctx.CacheContext()
-		sp.Reset(cacheCtx)
-	}
+	cacheCtx, _ := p.ctx.CacheContext()
+	sp.Reset(cacheCtx)
 	return sp
 }
 

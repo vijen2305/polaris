@@ -39,15 +39,26 @@ type ChainWriter interface {
 		state state.StateDB, emitHeadEvent bool) (status core.WriteStatus, err error)
 }
 
-// WriteBlockAndSetHead is a no-op in the current implementation. Potentially usable later.
+// is a no-op in the current implementation. Potentially usable later.
 func (*blockchain) WriteBlockAndSetHead(
 	_ *types.Block, _ []*types.Receipt, _ []*types.Log, _ state.StateDB,
 	_ bool) (core.WriteStatus, error) {
 	return core.NonStatTy, nil
 }
 
+func (bc *blockchain) InsertBlockWithoutSetHeadCtx(ctx context.Context, block *types.Block) error {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	bc.bp.Prepare(ctx)
+	if bc.hp != nil {
+		bc.hp.Prepare(ctx)
+	}
+	bc.sp.Reset(ctx)
+	return bc.InsertBlockWithoutSetHead(block)
+}
+
 func (bc *blockchain) InsertBlockWithoutSetHead(block *types.Block) error {
-	// Retrieve the parent block and it's state to execute on top
+	// Retrieve the parent block and it's state to WriteBlockAndSetHeadexecute on top
 	// parent := bc.GetBlock(block.ParentHash(), block.NumberU64()-1)
 	// if parent == nil {
 	// 	return fmt.Errorf("parent block not found")

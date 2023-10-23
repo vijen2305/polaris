@@ -33,6 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/miner"
 
 	"pkg.berachain.dev/polaris/eth"
+	"pkg.berachain.dev/polaris/eth/core"
 	"pkg.berachain.dev/polaris/eth/core/types"
 )
 
@@ -48,14 +49,18 @@ type EnvelopeSerializer interface {
 // Miner implements the baseapp.TxSelector interface.
 type Miner struct {
 	eth.Miner
+	chain          core.Blockchain
+	parentHandler  sdk.ProcessProposalHandler
 	serializer     EnvelopeSerializer
 	currentPayload *miner.Payload
 }
 
 // New produces a cosmos miner from a geth miner.
-func New(gm eth.Miner) *Miner {
+func New(gm eth.Miner, parentHandler sdk.ProcessProposalHandler, chain core.Blockchain) *Miner {
 	return &Miner{
-		Miner: gm,
+		Miner:         gm,
+		parentHandler: parentHandler,
+		chain:         chain,
 	}
 }
 
@@ -66,14 +71,26 @@ func (m *Miner) Init(serializer EnvelopeSerializer) {
 
 // PrepareProposal implements baseapp.PrepareProposal.
 func (m *Miner) PrepareProposal(
-	ctx sdk.Context, _ *abci.RequestPrepareProposal,
+	ctx sdk.Context, req *abci.RequestPrepareProposal,
 ) (*abci.ResponsePrepareProposal, error) {
+	// cctx, _ := ctx.CacheContext()
+	// defer m.chain.SetSDBQueryState(cctx)
+
 	var payloadEnvelopeBz []byte
 	var err error
 	if payloadEnvelopeBz, err = m.buildBlock(ctx); err != nil {
 		return nil, err
 	}
 	return &abci.ResponsePrepareProposal{Txs: [][]byte{payloadEnvelopeBz}}, err
+}
+
+func (m *Miner) ProcessProposal(ctx sdk.Context, req *abci.RequestProcessProposal) (*abci.ResponseProcessProposal, error) {
+	// cctx, _ := ctx.CacheContext()
+	// m.chain.SetSDBQueryState(cctx)
+	if m.parentHandler == nil {
+		return nil, nil
+	}
+	return m.parentHandler(ctx, req)
 }
 
 // buildBlock builds and submits a payload, it also waits for the txs

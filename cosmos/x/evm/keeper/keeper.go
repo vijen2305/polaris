@@ -21,8 +21,6 @@
 package keeper
 
 import (
-	"context"
-
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
@@ -33,14 +31,10 @@ import (
 	"pkg.berachain.dev/polaris/cosmos/x/evm/types"
 	"pkg.berachain.dev/polaris/eth/core"
 	ethprecompile "pkg.berachain.dev/polaris/eth/core/precompile"
-	"pkg.berachain.dev/polaris/eth/params"
 )
 
 type Blockchain interface {
-	PreparePlugins(context.Context)
-	Config() *params.ChainConfig
-	core.ChainWriter
-	core.ChainReader
+	core.Blockchain
 }
 
 type Keeper struct {
@@ -79,4 +73,8 @@ func (k *Keeper) Setup(chain Blockchain) error {
 // Logger returns a module-specific logger.
 func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With(types.ModuleName)
+}
+
+func (k *Keeper) SetRootMultiStore(ms storetypes.CommitMultiStore) {
+	k.Host.GetStatePlugin().(state.Plugin).SetRootMultiStore(ms)
 }

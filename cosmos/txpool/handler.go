@@ -29,7 +29,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/ethereum/go-ethereum/event"
 
 	"pkg.berachain.dev/polaris/eth/core"
@@ -217,6 +216,7 @@ func (h *handler) broadcastTransaction(tx *coretypes.Transaction, retries int) {
 	// CometBFT's p2p layer.
 	rsp, err := h.clientCtx.BroadcastTxSync(txBytes)
 
+	// If we see an ABCI response error.
 	if err != nil {
 		h.logger.Error("error on transactions broadcast", "err", err)
 		h.failedTxs <- &failedTx{tx: tx, retries: retries}
@@ -224,10 +224,15 @@ func (h *handler) broadcastTransaction(tx *coretypes.Transaction, retries int) {
 		if sdkerrors.ErrMempoolIsFull.Codespace() == rsp.Codespace &&
 			rsp.Code == sdkerrors.ErrMempoolIsFull.ABCICode() {
 			h.logger.Error("failed to broadcast: comet-bft mempool is full", "tx_hash", tx.Hash())
+			h.failedTxs <- &failedTx{tx: tx, retries: retries}
+		} else if sdkerrors.ErrTxInMempoolCache.Codespace() == rsp.Codespace &&
+			rsp.Code == sdkerrors.ErrTxInMempoolCache.ABCICode() {
+			// do nothing
 		} else {
 			h.logger.Error("failed to broadcast transaction",
 				"codespace", rsp.Codespace, "code", rsp.Code, "info", rsp.Info, "tx_hash", tx.Hash())
+			h.failedTxs <- &failedTx{tx: tx, retries: retries}
 		}
-		h.failedTxs <- &failedTx{tx: tx, retries: retries}
+
 	}
 }
