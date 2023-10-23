@@ -23,11 +23,10 @@ package eth
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/core"
+	coretypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
-
-	"pkg.berachain.dev/polaris/eth/core"
-	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 )
 
 type txPoolAPI struct {

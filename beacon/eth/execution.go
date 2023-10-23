@@ -37,11 +37,11 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/rpc"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	coretypes "github.com/ethereum/go-ethereum/core/types"
 	"pkg.berachain.dev/polaris/beacon/log"
 	"pkg.berachain.dev/polaris/beacon/prysm"
-	"pkg.berachain.dev/polaris/eth/common"
-	"pkg.berachain.dev/polaris/eth/core"
-	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 )
 
 type (

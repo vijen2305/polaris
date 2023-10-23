@@ -6,7 +6,6 @@ use (
 	./cosmos
 	./e2e/localnet
 	./e2e/testapp
-	./eth
 	./lib
 	./tools
 )
