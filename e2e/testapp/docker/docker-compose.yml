@@ -27,7 +27,7 @@ services:
     ports:
       - "26656-26658:26656-26658"
       - "9090-9091:9090-9091"
-      - "1545-1546:8545-8546"
+      - "8545-8546:8545-8546"
     environment:
       - ID=0
       - CHAINID=berachain-localnet-666
@@ -98,7 +98,7 @@ services:
     container_name: nginx
     image: nginx:latest
     ports:
-      - "8545:80"
+      - "7545:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     networks:

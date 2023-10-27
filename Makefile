@@ -157,6 +157,12 @@ mockery:
 start:
 	@./e2e/testapp/entrypoint.sh
 
+start-multi:
+	@cd e2e/testapp/docker && ./one-click.sh
+
+stop-multi:
+	@cd e2e/testapp/docker && docker-compose down
+	
 #################
 #     unit      #
 #################
