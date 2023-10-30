@@ -19,7 +19,7 @@
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND
 # TITLE.
 
-sh ./reset-temp.sh
+sh ./reset-temp.sh  
 
 # Stop the old one
 docker-compose stop

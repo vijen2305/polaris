@@ -43,6 +43,7 @@ forge-build: |
 
 forge-clean: |
 	@forge clean --root $(CONTRACTS_DIR)
+	
 
 
 #################
@@ -162,7 +163,7 @@ start-multi:
 
 stop-multi:
 	@cd e2e/testapp/docker && docker-compose down
-	
+
 #################
 #     unit      #
 #################
