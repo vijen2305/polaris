@@ -30,6 +30,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum/consensus/beacon"
+	"github.com/ethereum/go-ethereum/params"
 
 	"pkg.berachain.dev/polaris/cosmos/config"
 	testutil "pkg.berachain.dev/polaris/cosmos/testutil"
@@ -38,7 +39,6 @@ import (
 	"pkg.berachain.dev/polaris/cosmos/x/evm/plugins/state"
 	"pkg.berachain.dev/polaris/eth/core"
 	ethprecompile "pkg.berachain.dev/polaris/eth/core/precompile"
-	"pkg.berachain.dev/polaris/eth/params"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -66,7 +66,7 @@ var _ = Describe("Genesis", func() {
 		ctx, ak, _, _ = testutil.SetupMinimalKeepers(log.NewTestLogger(GinkgoT()))
 		ctx = ctx.WithBlockHeight(0)
 		cfg := config.DefaultConfig()
-		ethGen.Config = params.DefaultChainConfig
+		ethGen.Config = core.DefaultChainConfig
 		cfg.Node.DataDir = GinkgoT().TempDir()
 		cfg.Node.KeyStoreDir = GinkgoT().TempDir()
 		k = keeper.NewKeeper(
@@ -83,7 +83,7 @@ var _ = Describe("Genesis", func() {
 			cfg,
 		)
 		err = k.Setup(
-			core.NewChain(k.Host, params.DefaultChainConfig, beacon.NewFaker()),
+			core.NewChain(k.Host, core.DefaultChainConfig, beacon.NewFaker()),
 		)
 		Expect(err).ToNot(HaveOccurred())
 

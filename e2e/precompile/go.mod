@@ -8,6 +8,7 @@ replace github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.2021
 require (
 	github.com/cosmos/cosmos-sdk v0.50.0-rc.1.0.20231023194456-42dbfc4d7087
 	github.com/cosmos/gogoproto v1.4.11
+	github.com/ethereum/go-ethereum v1.13.1
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.27.10
 	pkg.berachain.dev/polaris/contracts v0.0.0-20231023174626-bf146d519cd3
@@ -74,7 +75,6 @@ require (
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/emicklei/dot v1.6.0 // indirect
 	github.com/ethereum/c-kzg-4844 v0.3.1 // indirect
-	github.com/ethereum/go-ethereum v1.13.1 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

@@ -27,12 +27,13 @@ import (
 
 	tmock "github.com/stretchr/testify/mock"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/params"
+
 	"pkg.berachain.dev/polaris/eth/core/state"
 	"pkg.berachain.dev/polaris/eth/core/state/mock"
 	"pkg.berachain.dev/polaris/eth/core/state/mocks"
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
-	"pkg.berachain.dev/polaris/eth/params"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -24,7 +24,8 @@ import (
 	"context"
 	"math/big"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/eth/core/vm"
 )
 

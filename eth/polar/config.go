@@ -24,14 +24,15 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/txpool/legacypool"
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/miner"
+	"github.com/ethereum/go-ethereum/params"
 
-	"pkg.berachain.dev/polaris/eth/common"
-	"pkg.berachain.dev/polaris/eth/log"
-	"pkg.berachain.dev/polaris/eth/params"
+	"pkg.berachain.dev/polaris/eth/core"
 )
 
 const (
@@ -53,7 +54,7 @@ func DefaultConfig() *Config {
 	minerCfg.Etherbase = common.HexToAddress(developmentCoinbase)
 	// TODO: setup proper command line flags
 	return &Config{
-		Chain:         *params.DefaultChainConfig,
+		Chain:         *core.DefaultChainConfig,
 		Miner:         minerCfg,
 		GPO:           gpoConfig,
 		LegacyTxPool:  legacypool.DefaultConfig,

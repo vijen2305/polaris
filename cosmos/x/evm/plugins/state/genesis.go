@@ -28,7 +28,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/eth/core"
 )
 

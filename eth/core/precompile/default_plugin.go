@@ -24,9 +24,10 @@ import (
 	"context"
 	"math/big"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/params"
+
 	"pkg.berachain.dev/polaris/eth/core/vm"
-	"pkg.berachain.dev/polaris/eth/params"
 	"pkg.berachain.dev/polaris/lib/registry"
 	libtypes "pkg.berachain.dev/polaris/lib/types"
 )

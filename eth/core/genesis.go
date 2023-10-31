@@ -23,10 +23,11 @@ package core
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/params"
 
-	"pkg.berachain.dev/polaris/eth/common"
-	"pkg.berachain.dev/polaris/eth/common/hexutil"
 	"pkg.berachain.dev/polaris/eth/core/types"
 )
 
@@ -67,6 +68,33 @@ var DefaultGenesis = &core.Genesis{
 
 	// These fields are used for consensus tests. Please don't use them
 	// in actual genesis blocks.
+}
+
+const DefaultEIP155ChainID = 2061
+
+var zero = uint64(0)
+
+var DefaultChainConfig = &params.ChainConfig{
+	ChainID:                       big.NewInt(DefaultEIP155ChainID),
+	HomesteadBlock:                big.NewInt(0),
+	DAOForkBlock:                  big.NewInt(0),
+	DAOForkSupport:                true,
+	EIP150Block:                   big.NewInt(0),
+	EIP155Block:                   big.NewInt(0),
+	EIP158Block:                   big.NewInt(0),
+	ByzantiumBlock:                big.NewInt(0),
+	ConstantinopleBlock:           big.NewInt(0),
+	PetersburgBlock:               big.NewInt(0),
+	IstanbulBlock:                 big.NewInt(0),
+	MuirGlacierBlock:              big.NewInt(0),
+	BerlinBlock:                   big.NewInt(0),
+	LondonBlock:                   big.NewInt(0),
+	ArrowGlacierBlock:             big.NewInt(0),
+	GrayGlacierBlock:              big.NewInt(0),
+	MergeNetsplitBlock:            big.NewInt(0),
+	TerminalTotalDifficulty:       big.NewInt(0),
+	TerminalTotalDifficultyPassed: true,
+	ShanghaiTime:                  &zero,
 }
 
 // UnmarshalGenesisHeader sets the fields of the given header into the Genesis struct.

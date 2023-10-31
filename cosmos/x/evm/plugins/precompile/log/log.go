@@ -21,8 +21,9 @@
 package log
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/eth/accounts/abi"
-	"pkg.berachain.dev/polaris/eth/common"
 	libtypes "pkg.berachain.dev/polaris/lib/types"
 )
 

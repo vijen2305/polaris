@@ -23,8 +23,9 @@ package journal
 import (
 	"math/big"
 
-	"pkg.berachain.dev/polaris/eth/common"
-	"pkg.berachain.dev/polaris/eth/crypto"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	libtypes "pkg.berachain.dev/polaris/lib/types"
 	"pkg.berachain.dev/polaris/lib/utils"
 )

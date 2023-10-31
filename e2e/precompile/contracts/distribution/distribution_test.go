@@ -33,13 +33,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	bbindings "pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/bank"
 	bindings "pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/distribution"
 	sbindings "pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/staking"
 	tbindings "pkg.berachain.dev/polaris/contracts/bindings/testing"
 	network "pkg.berachain.dev/polaris/e2e/localnet/network"
 	utils "pkg.berachain.dev/polaris/e2e/precompile"
-	"pkg.berachain.dev/polaris/eth/common"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -25,9 +25,10 @@ import (
 	"math/big"
 	"reflect"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/contracts/bindings/testing"
 	"pkg.berachain.dev/polaris/eth/accounts/abi"
-	"pkg.berachain.dev/polaris/eth/common"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

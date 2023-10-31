@@ -29,10 +29,11 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	bindings "pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/bank"
 	localnet "pkg.berachain.dev/polaris/e2e/localnet/network"
 	utils "pkg.berachain.dev/polaris/e2e/precompile"
-	"pkg.berachain.dev/polaris/eth/common"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

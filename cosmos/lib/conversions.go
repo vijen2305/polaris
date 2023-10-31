@@ -33,11 +33,12 @@ import (
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	libgenerated "pkg.berachain.dev/polaris/contracts/bindings/cosmos/lib"
 	"pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/governance"
 	"pkg.berachain.dev/polaris/contracts/bindings/cosmos/precompile/staking"
 	"pkg.berachain.dev/polaris/cosmos/precompile"
-	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/lib/utils"
 )
 

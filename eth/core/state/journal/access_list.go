@@ -21,7 +21,8 @@
 package journal
 
 import (
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	libtypes "pkg.berachain.dev/polaris/lib/types"
 	"pkg.berachain.dev/polaris/lib/utils"
 )

@@ -31,13 +31,13 @@ import (
 
 	geth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	tbindings "pkg.berachain.dev/polaris/contracts/bindings/testing"
 	localnet "pkg.berachain.dev/polaris/e2e/localnet/network"
-	"pkg.berachain.dev/polaris/eth/common"
 	coretypes "pkg.berachain.dev/polaris/eth/core/types"
 
 	. "github.com/onsi/ginkgo/v2"

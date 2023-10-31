@@ -30,14 +30,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"pkg.berachain.dev/polaris/cosmos/store/snapmulti"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/plugins"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/plugins/state/events"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/types"
-	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/eth/core"
 	ethstate "pkg.berachain.dev/polaris/eth/core/state"
-	"pkg.berachain.dev/polaris/eth/crypto"
 	"pkg.berachain.dev/polaris/lib/snapshot"
 	libtypes "pkg.berachain.dev/polaris/lib/types"
 )

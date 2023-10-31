@@ -26,9 +26,10 @@ import (
 
 	"cosmossdk.io/log"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	testutil "pkg.berachain.dev/polaris/cosmos/testutil"
 	"pkg.berachain.dev/polaris/cosmos/x/evm/plugins/state"
-	"pkg.berachain.dev/polaris/eth/common"
 	"pkg.berachain.dev/polaris/eth/core"
 )
 

@@ -21,8 +21,9 @@
 package state
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/cosmos/x/evm/types"
-	"pkg.berachain.dev/polaris/eth/common"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

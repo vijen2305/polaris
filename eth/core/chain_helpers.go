@@ -21,7 +21,8 @@
 package core
 
 import (
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"pkg.berachain.dev/polaris/eth/core/types"
 )
 

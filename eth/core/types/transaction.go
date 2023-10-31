@@ -21,9 +21,8 @@
 package types
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
-
-	"pkg.berachain.dev/polaris/eth/common"
 )
 
 // TxLookupEntry is a positional metadata to help looking up a transaction by hash.

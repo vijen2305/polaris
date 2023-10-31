@@ -23,9 +23,10 @@ package mock
 import (
 	"math/big"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"pkg.berachain.dev/polaris/eth/core/state"
-	"pkg.berachain.dev/polaris/eth/crypto"
 )
 
 //go:generate moq -out ./state.mock.go -skip-ensure -pkg mock ../ Plugin

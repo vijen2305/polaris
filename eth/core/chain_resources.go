@@ -23,10 +23,11 @@ package core
 import (
 	"errors"
 
-	"pkg.berachain.dev/polaris/eth/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/params"
+
 	"pkg.berachain.dev/polaris/eth/core/state"
 	"pkg.berachain.dev/polaris/eth/core/vm"
-	"pkg.berachain.dev/polaris/eth/params"
 )
 
 // ChainResources is the interface that defines functions for code paths within the chain to
