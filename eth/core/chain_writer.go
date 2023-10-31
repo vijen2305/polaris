@@ -47,12 +47,6 @@ func (*blockchain) WriteBlockAndSetHead(
 }
 
 func (bc *blockchain) InsertBlockWithoutSetHead(block *types.Block) error {
-	// Retrieve the parent block and it's state to execute on top
-	// parent := bc.GetBlock(block.ParentHash(), block.NumberU64()-1)
-	// if parent == nil {
-	// 	return fmt.Errorf("parent block not found")
-	// }
-
 	// Process block using the parent state as reference point
 	pstart := time.Now()
 	receipts, logs, _, err := bc.processor.Process(block, bc.statedb, *bc.vmConfig)
